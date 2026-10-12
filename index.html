@@ -100,7 +100,7 @@ function reset() {
   S.t = 0; S.speed = S.baseSpeed; S.dist = 0; S.score = 0; S.nearMiss = 0;
   S.player = { lane: 1, x: laneX[1], tx: laneX[1] };
   S.npcs = []; S.boards = []; S.poles = []; S.parts = [];
-  S.shake = 0; S.lastFree = 1; S.sinceSpawn = 9999; S.centerAge = 0; S.squirm = 0;
+  S.shake = 0; S.lastFree = 1; S.sinceSpawn = 9999; S.laneAge = [0, 0, 0]; S.squirm = 0;
   // pre-fill roadside
   for (let y = -100; y < H + 200; y += 130) S.poles.push({ y, side: (y / 130) % 2 ? 1 : -1 });
   for (let i = 0; i < 4; i++) S.boards.push({ y: -i * 900 - 300, side: i % 2 ? 1 : -1, ad: i % 4 });
@@ -158,20 +158,22 @@ cv.addEventListener('touchmove', e => {
    - waves are spaced by distance so you always have time to cut across */
 const HELLCAT_COLORS = ['#15151a', '#8f1212', '#d8d8de', '#3d1a5c', '#b35c12', '#2a2d33', '#101014'];
 function spawnWave() {
+  // every lane has an age (waves since it last had a car) — the stalest lane MUST be blocked.
+  // this forces all 3 lanes (including center) into regular rotation.
+  S.laneAge = S.laneAge || [0, 0, 0];
+  S.laneAge = S.laneAge.map(a => a + 1);
+  let mustBlock = 0;
+  for (let l = 1; l < 3; l++) if (S.laneAge[l] > S.laneAge[mustBlock]) mustBlock = l;
+  // free lane: within 1 of last free (always reachable) and never the must-block lane
   const lastFree = S.lastFree;
-  const freeCandidates = [0, 1, 2].sort((a, b) => Math.abs(a - lastFree) - Math.abs(b - lastFree) || Math.random() - 0.5);
-  const freeLane = freeCandidates[0];
-  // guarantee center-lane traffic: if lane 1 hasn't had a car in a few waves, force one there
-  S.centerAge = (S.centerAge || 0) + 1;
-  const others = [0, 1, 2].filter(l => l !== freeLane).sort((a, b) => {
-    const aPri = (a === 1 && S.centerAge >= 3) ? -1 : 0;
-    const bPri = (b === 1 && S.centerAge >= 3) ? -1 : 0;
-    return aPri - bPri || Math.random() - 0.5;
-  });
-  const n = Math.random() < 0.45 ? 2 : 1; // block 1 or 2 of the other lanes
-  for (let i = 0; i < n; i++) {
-    const lane = others[i];
-    if (lane === 1) S.centerAge = 0;
+  const freeOpts = [0, 1, 2].filter(l => l !== mustBlock && Math.abs(l - lastFree) <= 1);
+  const freeLane = freeOpts[Math.random() * freeOpts.length | 0];
+  // block the stalest lane, plus a second car 45% of the time (never all 3)
+  const others = [0, 1, 2].filter(l => l !== freeLane && l !== mustBlock).sort(() => Math.random() - 0.5);
+  const blocked = [mustBlock].concat(Math.random() < 0.45 && others.length ? [others[0]] : []);
+  for (let i = 0; i < blocked.length; i++) {
+    const lane = blocked[i];
+    S.laneAge[lane] = 0;
     const r = Math.random();
     let type = 'hellcat';
     if (r > 0.82) type = Math.random() < 0.5 ? 'truck' : 'sedan'; // ~18% variety
@@ -632,7 +634,7 @@ function draw() {
     // speedo
     const sp = (S.speed - S.baseSpeed) / (S.maxSpeed - S.baseSpeed);
     ctx.textAlign = 'right'; ctx.fillStyle = '#888'; ctx.font = 'bold 12px Arial';
-    ctx.fillText(Math.round(S.speed * 9) + ' MPH', W - 18, 58);
+    ctx.fillText(Math.min(400, Math.round(S.speed / S.maxSpeed * 400)) + ' MPH', W - 18, 58);
     ctx.fillStyle = '#222'; ctx.fillRect(W - 158, 66, 140, 7);
     const grd = ctx.createLinearGradient(W - 158, 0, W - 18, 0);
     grd.addColorStop(0, '#7CFF6B'); grd.addColorStop(1, '#ff5b5b');
