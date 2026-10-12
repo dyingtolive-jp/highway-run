@@ -94,18 +94,13 @@ const S = {
   shake: 0, lastFree: 1, sinceSpawn: 9999,
   best: parseInt(localStorage.getItem('dtl_highway_best') || '0', 10)
 };
-/* camera tilt: things far up-road draw smaller, like looking further ahead */
-function depthScale(y) {
-  const t = Math.max(0, Math.min(1, (y + 520) / (H + 520)));
-  return 0.42 + 0.58 * t;
-}
 const CAR_W = 56, CAR_H = 108;
 
 function reset() {
   S.t = 0; S.speed = S.baseSpeed; S.dist = 0; S.score = 0; S.nearMiss = 0;
   S.player = { lane: 1, x: laneX[1], tx: laneX[1] };
   S.npcs = []; S.boards = []; S.poles = []; S.parts = [];
-  S.shake = 0; S.lastFree = 1; S.sinceSpawn = 9999;
+  S.shake = 0; S.lastFree = 1; S.sinceSpawn = 9999; S.centerAge = 0; S.squirm = 0;
   // pre-fill roadside
   for (let y = -100; y < H + 200; y += 130) S.poles.push({ y, side: (y / 130) % 2 ? 1 : -1 });
   for (let i = 0; i < 4; i++) S.boards.push({ y: -i * 900 - 300, side: i % 2 ? 1 : -1, ad: i % 4 });
@@ -127,16 +122,16 @@ function moveLane(d) {
   const nl = Math.max(0, Math.min(2, p.lane + d));
   if (nl !== p.lane) {
     p.lane = nl; p.tx = laneX[nl];
-    // tire smoke off the rear wheels + camera kick
+    // heavy tire smoke off the rear wheels + small camera kick
     const py = H * 0.86;
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 22; i++) {
       S.parts.push({
-        x: p.x + (Math.random() - .5) * 40, y: py + 28 + Math.random() * 12,
-        vx: (Math.random() - .5) * 3 - d * 2.5, vy: 0.8 + Math.random() * 2,
-        life: 26 + Math.random() * 20, color: 'rgba(205,205,212,.45)', s: 4 + Math.random() * 5
+        x: p.x + (Math.random() - .5) * 44, y: py + 26 + Math.random() * 14,
+        vx: (Math.random() - .5) * 4 - d * 3, vy: 0.8 + Math.random() * 2.4,
+        life: 30 + Math.random() * 24, color: 'rgba(210,210,218,.5)', s: 5 + Math.random() * 6
       });
     }
-    S.shake = Math.max(S.shake, 6);
+    S.shake = Math.max(S.shake, 2.5);
   }
 }
 // touch: tap left/right third, or swipe
@@ -166,10 +161,17 @@ function spawnWave() {
   const lastFree = S.lastFree;
   const freeCandidates = [0, 1, 2].sort((a, b) => Math.abs(a - lastFree) - Math.abs(b - lastFree) || Math.random() - 0.5);
   const freeLane = freeCandidates[0];
-  const others = [0, 1, 2].filter(l => l !== freeLane).sort(() => Math.random() - 0.5);
+  // guarantee center-lane traffic: if lane 1 hasn't had a car in a few waves, force one there
+  S.centerAge = (S.centerAge || 0) + 1;
+  const others = [0, 1, 2].filter(l => l !== freeLane).sort((a, b) => {
+    const aPri = (a === 1 && S.centerAge >= 3) ? -1 : 0;
+    const bPri = (b === 1 && S.centerAge >= 3) ? -1 : 0;
+    return aPri - bPri || Math.random() - 0.5;
+  });
   const n = Math.random() < 0.45 ? 2 : 1; // block 1 or 2 of the other lanes
   for (let i = 0; i < n; i++) {
     const lane = others[i];
+    if (lane === 1) S.centerAge = 0;
     const r = Math.random();
     let type = 'hellcat';
     if (r > 0.82) type = Math.random() < 0.5 ? 'truck' : 'sedan'; // ~18% variety
@@ -179,7 +181,7 @@ function spawnWave() {
       w: type === 'truck' ? CAR_W + 14 : CAR_W,
       h: type === 'truck' ? CAR_H + 46 : CAR_H,
       type, color: HELLCAT_COLORS[Math.random() * HELLCAT_COLORS.length | 0],
-      npcSpeed, passed: false, wob: Math.random() * 6
+      npcSpeed, passed: false
     });
   }
   S.lastFree = freeLane;
@@ -211,6 +213,21 @@ function update(dt) {
   const p = S.player;
   p.x += (p.tx - p.x) * Math.min(1, dt * 0.30);
   const py = H * 0.86;
+  // squirm + traction loss while cutting across lanes
+  const changing = Math.abs(p.tx - p.x) > 5 ? 1 : 0;
+  S.squirm = changing;
+  if (changing) {
+    S.speed = Math.max(S.baseSpeed, S.speed - dt * 0.03);
+    if (Math.random() < 0.55) {
+      for (let k = 0; k < 2; k++) {
+        S.parts.push({
+          x: p.x + (Math.random() - .5) * 40, y: py + 28 + Math.random() * 10,
+          vx: (Math.random() - .5) * 3, vy: 1 + Math.random() * 2,
+          life: 22 + Math.random() * 16, color: 'rgba(210,210,218,.42)', s: 4 + Math.random() * 5
+        });
+      }
+    }
+  }
 
   // spawn by distance: next wave only when the last one is far enough ahead
   // that you can always cut across in time — gap grows with speed
@@ -223,13 +240,11 @@ function update(dt) {
   for (let i = S.npcs.length - 1; i >= 0; i--) {
     const n = S.npcs[i];
     n.y += (S.speed - n.npcSpeed) * dt;
-    n.x += Math.sin(S.t * 0.05 + n.wob) * dt * 0.25; // slight drift
     if (n.y > H + 220) { S.npcs.splice(i, 1); continue; }
-    const ds = depthScale(n.y); // perspective scale for this npc
     // near miss: passed player line without hitting
-    if (!n.passed && n.y - (n.h * ds) / 2 > py + CAR_H / 2) {
+    if (!n.passed && n.y - n.h / 2 > py + CAR_H / 2) {
       n.passed = true;
-      const gap = Math.abs(n.x - p.x) - (n.w * ds + CAR_W) / 2;
+      const gap = Math.abs(n.x - p.x) - (n.w + CAR_W) / 2;
       if (gap < 34 && gap > -10) {
         S.nearMiss++; S.score += 60;
         pop('CLOSE +' + 60);
@@ -237,9 +252,9 @@ function update(dt) {
         burst(p.x, py - 40, 6, '#7CFF6B');
       }
     }
-    // collision (hitbox matches the on-screen scaled size)
+    // collision (steady full-size hitboxes)
     const pw = CAR_W * hitShrink, ph = CAR_H * hitShrink;
-    const nw = n.w * ds * hitShrink, nh = n.h * ds * hitShrink;
+    const nw = n.w * hitShrink, nh = n.h * hitShrink;
     if (Math.abs(n.x - p.x) < (pw + nw) / 2 && Math.abs(n.y - py) < (ph + nh) / 2) {
       die(); return;
     }
@@ -318,8 +333,11 @@ function drawWheel(x, y, w, h, camber) {
 /* stanced S15, facing up */
 function drawS15(x, y) {
   const w = CAR_W, h = CAR_H;
+  const sq = S.squirm ? Math.sin(S.t * 0.9) * 0.07 : 0; // traction-loss wiggle
+  const jx = S.squirm ? Math.sin(S.t * 1.3) * 3 : 0;
   ctx.save();
-  ctx.translate(x, y);
+  ctx.translate(x + jx, y);
+  ctx.rotate(sq);
   // shadow
   ctx.fillStyle = 'rgba(0,0,0,.5)';
   ctx.beginPath(); ctx.ellipse(0, 6, w * 0.72, h * 0.52, 0, 0, 7); ctx.fill();
@@ -377,10 +395,11 @@ function drawS15(x, y) {
 /* hellcat (challenger): boxy muscle, facing down */
 function drawHellcat(n) {
   const w = n.w, h = n.h;
-  const ds = depthScale(n.y);
+  // steady full size — fade in at spawn instead of growing
+  const fade = Math.max(0, Math.min(1, (n.y + 520) / 220));
   ctx.save();
+  ctx.globalAlpha = fade;
   ctx.translate(n.x, n.y);
-  ctx.scale(ds, ds);
   ctx.fillStyle = 'rgba(0,0,0,.5)';
   ctx.beginPath(); ctx.ellipse(0, 6, w * 0.7, h * 0.52, 0, 0, 7); ctx.fill();
   // wheels
@@ -424,8 +443,8 @@ function shade(hex, amt) {
   return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
 }
 function drawSedan(n) {
-  const ds = depthScale(n.y);
-  ctx.save(); ctx.translate(n.x, n.y); ctx.scale(ds, ds);
+  const fade = Math.max(0, Math.min(1, (n.y + 520) / 220));
+  ctx.save(); ctx.globalAlpha = fade; ctx.translate(n.x, n.y);
   ctx.fillStyle = 'rgba(0,0,0,.5)';
   ctx.beginPath(); ctx.ellipse(0, 6, n.w * 0.7, n.h * 0.52, 0, 0, 7); ctx.fill();
   ctx.fillStyle = '#181820';
@@ -445,8 +464,8 @@ function drawSedan(n) {
   ctx.restore();
 }
 function drawTruck(n) {
-  const ds = depthScale(n.y);
-  ctx.save(); ctx.translate(n.x, n.y); ctx.scale(ds, ds);
+  const fade = Math.max(0, Math.min(1, (n.y + 520) / 220));
+  ctx.save(); ctx.globalAlpha = fade; ctx.translate(n.x, n.y);
   ctx.fillStyle = 'rgba(0,0,0,.5)';
   ctx.beginPath(); ctx.ellipse(0, 6, n.w * 0.72, n.h * 0.52, 0, 0, 7); ctx.fill();
   ctx.fillStyle = '#20242c';
