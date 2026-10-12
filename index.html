@@ -27,7 +27,9 @@
   .stepper { display:flex; align-items:center; gap:10px; }
   .stepbtn { width:34px; height:34px; background:#1a1a20; color:#fff; border:1px solid #3a3a44; font-size:18px; cursor:pointer; font-family:'Arial Black',Arial,sans-serif; }
   .stepbtn:active { transform:scale(.92); }
-  .betamt { color:#fff; font-size:20px; min-width:86px; }
+  .betamt { color:#fff; font-size:20px; width:96px; text-align:center; background:#111; border:1px solid #3a3a44;
+    font-family:'Arial Black',Arial,sans-serif; padding:4px 2px; -moz-appearance:textfield; }
+  .betamt::-webkit-outer-spin-button, .betamt::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
   .timebtns { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
   .tbtn { background:#1a1a20; color:#999; border:1px solid #3a3a44; font-family:'Arial Black',Arial,sans-serif; font-size:11px; padding:8px 9px; cursor:pointer; letter-spacing:1px; }
   .tbtn small { display:block; color:#7CFF6B; font-size:10px; }
@@ -79,8 +81,9 @@
       <span class="betlabel">BET</span>
       <div class="stepper">
         <button class="stepbtn" id="betDown">−</button>
-        <span class="betamt" id="betAmt">50</span>
+        <input class="betamt" id="betAmt" type="number" min="0" step="1" value="50" inputmode="numeric">
         <button class="stepbtn" id="betUp">+</button>
+        <button class="stepbtn" id="betMax" style="width:auto; padding:0 10px; font-size:11px; letter-spacing:1px;">MAX</button>
       </div>
     </div>
     <div class="betrow">
@@ -259,9 +262,11 @@ function spawnWave() {
     const r = Math.random();
     let type = 'hellcat';
     if (r > 0.82) type = Math.random() < 0.5 ? 'truck' : 'sedan';
-    const npcSpeed = S.speed * (0.32 + Math.random() * 0.22);
+    // UNIFORM traffic speed: the whole field scrolls as one rigid pattern,
+    // so cars can never drift together into an unpassable 3-wide wall.
+    const npcSpeed = S.speed * 0.55;
     S.npcs.push({
-      lane, x: laneX[lane], y: -520 - i * (140 + Math.random() * 90),
+      lane, x: laneX[lane], y: -520 - i * (90 + Math.random() * 40),
       w: type === 'truck' ? CAR_W + 14 : CAR_W,
       h: type === 'truck' ? CAR_H + 46 : CAR_H,
       type, color: HELLCAT_COLORS[Math.random() * HELLCAT_COLORS.length | 0],
@@ -325,7 +330,8 @@ function update(dt) {
   }
 
   S.sinceSpawn += S.speed * dt;
-  const minGap = 430 + S.speed * 17;
+  // wide enough that each wave fully passes before you must commit to the next wave's lane
+  const minGap = 700 + S.speed * 25;
   if (S.sinceSpawn >= minGap) spawnWave();
 
   const hitShrink = 0.72;
@@ -746,13 +752,17 @@ function frame(ts) {
 }
 
 /* ---------- bet UI ---------- */
-let betAmtIdx = 3, betTimeIdx = 1;
+let betTimeIdx = 1;
+function getBetAmount() {
+  const v = parseInt(document.getElementById('betAmt').value, 10);
+  if (isNaN(v) || v < 0) return 0;
+  return Math.min(v, META.points);
+}
 function refreshBetUI() {
-  // clamp amount to balance
-  while (betAmtIdx > 0 && BET_AMOUNTS[betAmtIdx] > META.points) betAmtIdx--;
-  const amt = BET_AMOUNTS[betAmtIdx];
+  const input = document.getElementById('betAmt');
+  let amt = getBetAmount();
+  input.value = amt;
   const bt = BET_TIMES[betTimeIdx];
-  document.getElementById('betAmt').textContent = amt;
   document.getElementById('winPreview').textContent = amt > 0 ? 'WIN ' + Math.round(amt * bt.mult) + ' PTS' : 'NO BET — FREE RUN';
   const tb = document.getElementById('timeBtns');
   tb.innerHTML = '';
@@ -764,8 +774,18 @@ function refreshBetUI() {
     tb.appendChild(b);
   });
 }
-document.getElementById('betDown').onclick = () => { betAmtIdx = Math.max(0, betAmtIdx - 1); refreshBetUI(); };
-document.getElementById('betUp').onclick = () => { betAmtIdx = Math.min(BET_AMOUNTS.length - 1, betAmtIdx + 1); refreshBetUI(); };
+document.getElementById('betDown').onclick = () => {
+  const el = document.getElementById('betAmt');
+  el.value = Math.max(0, getBetAmount() - 10); refreshBetUI();
+};
+document.getElementById('betUp').onclick = () => {
+  const el = document.getElementById('betAmt');
+  el.value = Math.min(META.points, getBetAmount() + 10); refreshBetUI();
+};
+document.getElementById('betMax').onclick = () => {
+  document.getElementById('betAmt').value = META.points; refreshBetUI();
+};
+document.getElementById('betAmt').addEventListener('change', refreshBetUI);
 function refreshBalance() {
   document.getElementById('menuBalance').textContent = '★ ' + META.points.toLocaleString() + ' PTS';
   document.getElementById('garageBalance').textContent = '★ ' + META.points.toLocaleString() + ' PTS';
@@ -823,7 +843,7 @@ function renderGarage() {
 
 /* ---------- ui ---------- */
 function startGame() {
-  const amt = BET_AMOUNTS[betAmtIdx];
+  const amt = getBetAmount();
   const bt = BET_TIMES[betTimeIdx];
   let placed = 0;
   if (amt > 0 && amt <= META.points) { META.points -= amt; placed = amt; saveMeta(); }
