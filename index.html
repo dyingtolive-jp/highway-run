@@ -91,16 +91,21 @@ const S = {
   dist: 0, score: 0, nearMiss: 0,
   player: { lane: 1, x: 0, tx: 0 },
   npcs: [], boards: [], poles: [], parts: [],
-  spawnT: 0, shake: 0,
+  shake: 0, lastFree: 1, sinceSpawn: 9999,
   best: parseInt(localStorage.getItem('dtl_highway_best') || '0', 10)
 };
+/* camera tilt: things far up-road draw smaller, like looking further ahead */
+function depthScale(y) {
+  const t = Math.max(0, Math.min(1, (y + 520) / (H + 520)));
+  return 0.42 + 0.58 * t;
+}
 const CAR_W = 56, CAR_H = 108;
 
 function reset() {
   S.t = 0; S.speed = S.baseSpeed; S.dist = 0; S.score = 0; S.nearMiss = 0;
   S.player = { lane: 1, x: laneX[1], tx: laneX[1] };
   S.npcs = []; S.boards = []; S.poles = []; S.parts = [];
-  S.spawnT = 0; S.shake = 0;
+  S.shake = 0; S.lastFree = 1; S.sinceSpawn = 9999;
   // pre-fill roadside
   for (let y = -100; y < H + 200; y += 130) S.poles.push({ y, side: (y / 130) % 2 ? 1 : -1 });
   for (let i = 0; i < 4; i++) S.boards.push({ y: -i * 900 - 300, side: i % 2 ? 1 : -1, ad: i % 4 });
@@ -140,27 +145,33 @@ cv.addEventListener('touchmove', e => {
   else if (x - tsX < -34) { moveLane(-1); tsX = x; }
 }, { passive: false });
 
-/* ---------- spawning (always avoidable: never block all 3 lanes) ---------- */
+/* ---------- spawning: always a way through ----------
+   - never blocks all 3 lanes
+   - the free lane is always adjacent to (or the same as) the last wave's free lane
+   - waves are spaced by distance so you always have time to cut across */
 const HELLCAT_COLORS = ['#15151a', '#8f1212', '#d8d8de', '#3d1a5c', '#b35c12', '#2a2d33', '#101014'];
 function spawnWave() {
-  // pick 1 or 2 lanes, always leave a gap
-  const lanes = [0, 1, 2].sort(() => Math.random() - 0.5);
-  // 1 or 2 cars per wave — never all 3 lanes, always a gap
-  const n = Math.random() < 0.45 ? 2 : 1;
+  const lastFree = S.lastFree;
+  const freeCandidates = [0, 1, 2].sort((a, b) => Math.abs(a - lastFree) - Math.abs(b - lastFree) || Math.random() - 0.5);
+  const freeLane = freeCandidates[0];
+  const others = [0, 1, 2].filter(l => l !== freeLane).sort(() => Math.random() - 0.5);
+  const n = Math.random() < 0.45 ? 2 : 1; // block 1 or 2 of the other lanes
   for (let i = 0; i < n; i++) {
-    const lane = lanes[i];
+    const lane = others[i];
     const r = Math.random();
     let type = 'hellcat';
     if (r > 0.82) type = Math.random() < 0.5 ? 'truck' : 'sedan'; // ~18% variety
-    const npcSpeed = S.speed * (0.32 + Math.random() * 0.22); // npc forward speed
+    const npcSpeed = S.speed * (0.32 + Math.random() * 0.22);
     S.npcs.push({
-      lane, x: laneX[lane], y: -160 - i * (120 + Math.random() * 80),
+      lane, x: laneX[lane], y: -520 - i * (140 + Math.random() * 90),
       w: type === 'truck' ? CAR_W + 14 : CAR_W,
       h: type === 'truck' ? CAR_H + 46 : CAR_H,
       type, color: HELLCAT_COLORS[Math.random() * HELLCAT_COLORS.length | 0],
       npcSpeed, passed: false, wob: Math.random() * 6
     });
   }
+  S.lastFree = freeLane;
+  S.sinceSpawn = 0;
 }
 
 /* ---------- particles / popups ---------- */
@@ -186,16 +197,14 @@ function update(dt) {
   S.dist += S.speed * dt;
 
   const p = S.player;
-  p.x += (p.tx - p.x) * Math.min(1, dt * 0.22);
-  const py = H * 0.78;
+  p.x += (p.tx - p.x) * Math.min(1, dt * 0.30);
+  const py = H * 0.86;
 
-  // spawn
-  S.spawnT -= dt;
-  if (S.spawnT <= 0) {
-    spawnWave();
-    const interval = Math.max(34, 95 - S.speed * 2.6); // frames between waves
-    S.spawnT = interval * (0.85 + Math.random() * 0.3);
-  }
+  // spawn by distance: next wave only when the last one is far enough ahead
+  // that you can always cut across in time — gap grows with speed
+  S.sinceSpawn += S.speed * dt;
+  const minGap = 430 + S.speed * 17;
+  if (S.sinceSpawn >= minGap) spawnWave();
 
   // npcs
   const hitShrink = 0.72;
@@ -204,10 +213,11 @@ function update(dt) {
     n.y += (S.speed - n.npcSpeed) * dt;
     n.x += Math.sin(S.t * 0.05 + n.wob) * dt * 0.25; // slight drift
     if (n.y > H + 220) { S.npcs.splice(i, 1); continue; }
+    const ds = depthScale(n.y); // perspective scale for this npc
     // near miss: passed player line without hitting
-    if (!n.passed && n.y - n.h / 2 > py + CAR_H / 2) {
+    if (!n.passed && n.y - (n.h * ds) / 2 > py + CAR_H / 2) {
       n.passed = true;
-      const gap = Math.abs(n.x - p.x) - (n.w + CAR_W) / 2;
+      const gap = Math.abs(n.x - p.x) - (n.w * ds + CAR_W) / 2;
       if (gap < 34 && gap > -10) {
         S.nearMiss++; S.score += 60;
         pop('CLOSE +' + 60);
@@ -215,9 +225,9 @@ function update(dt) {
         burst(p.x, py - 40, 6, '#7CFF6B');
       }
     }
-    // collision
+    // collision (hitbox matches the on-screen scaled size)
     const pw = CAR_W * hitShrink, ph = CAR_H * hitShrink;
-    const nw = n.w * hitShrink, nh = n.h * hitShrink;
+    const nw = n.w * ds * hitShrink, nh = n.h * ds * hitShrink;
     if (Math.abs(n.x - p.x) < (pw + nw) / 2 && Math.abs(n.y - py) < (ph + nh) / 2) {
       die(); return;
     }
@@ -245,7 +255,7 @@ function update(dt) {
 function die() {
   S.mode = 'dead';
   S.shake = 16;
-  const p = S.player, py = H * 0.78;
+  const p = S.player, py = H * 0.86;
   burst(p.x, py, 34, '#ff5b5b');
   burst(p.x, py, 22, '#ffb14d');
   burst(p.x, py, 18, '#c9c9d4');
@@ -342,8 +352,10 @@ function drawS15(x, y) {
 /* hellcat (challenger): boxy muscle, facing down */
 function drawHellcat(n) {
   const w = n.w, h = n.h;
+  const ds = depthScale(n.y);
   ctx.save();
   ctx.translate(n.x, n.y);
+  ctx.scale(ds, ds);
   ctx.fillStyle = 'rgba(0,0,0,.5)';
   ctx.beginPath(); ctx.ellipse(0, 6, w * 0.7, h * 0.52, 0, 0, 7); ctx.fill();
   // wheels
@@ -389,7 +401,8 @@ function shade(hex, amt) {
   return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
 }
 function drawSedan(n) {
-  ctx.save(); ctx.translate(n.x, n.y);
+  const ds = depthScale(n.y);
+  ctx.save(); ctx.translate(n.x, n.y); ctx.scale(ds, ds);
   ctx.fillStyle = 'rgba(0,0,0,.5)';
   ctx.beginPath(); ctx.ellipse(0, 6, n.w * 0.7, n.h * 0.52, 0, 0, 7); ctx.fill();
   ctx.fillStyle = '#181820';
@@ -406,7 +419,8 @@ function drawSedan(n) {
   ctx.restore();
 }
 function drawTruck(n) {
-  ctx.save(); ctx.translate(n.x, n.y);
+  const ds = depthScale(n.y);
+  ctx.save(); ctx.translate(n.x, n.y); ctx.scale(ds, ds);
   ctx.fillStyle = 'rgba(0,0,0,.5)';
   ctx.beginPath(); ctx.ellipse(0, 6, n.w * 0.72, n.h * 0.52, 0, 0, 7); ctx.fill();
   ctx.fillStyle = '#20242c';
@@ -540,7 +554,7 @@ function draw() {
   }
 
   // player
-  if (S.mode !== 'dead') drawS15(S.player.x, H * 0.78);
+  if (S.mode !== 'dead') drawS15(S.player.x, H * 0.86);
 
   // particles
   for (const pt of S.parts) {
