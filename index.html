@@ -3,886 +3,358 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>HIGHWAY RUN ★ DYINGTOLIVE</title>
-<meta name="description" content="Bet points on your survival. Dodge Hellcats in a stanced S15. A DYINGTOLIVE joint.">
+<title>FRUIT MERGE ★ DYINGTOLIVE</title>
+<meta name="description" content="Drop fruits, merge matching pairs, grow the watermelon. A DYINGTOLIVE joint.">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-  html,body { width:100%; height:100%; overflow:hidden; background:#040405; font-family:'Arial Black',Arial,sans-serif; touch-action:none; user-select:none; -webkit-user-select:none; }
-  #game { display:block; width:100vw; height:100vh; }
-  .overlay { position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; background:rgba(0,0,0,.86); z-index:10; text-align:center; padding:18px; overflow-y:auto; }
-  .hidden { display:none !important; }
-  h1.title { font-size:clamp(36px,8vw,80px); letter-spacing:4px; line-height:.95;
+  html,body { width:100%; height:100%; overflow:hidden; background:#040405;
+    font-family:'Arial Black',Arial,sans-serif; touch-action:none; user-select:none; -webkit-user-select:none; }
+  #wrap { display:flex; flex-direction:column; align-items:center; height:100vh; height:100dvh; padding:10px 10px 8px; }
+  h1.title { font-size:clamp(26px,6.5vw,44px); letter-spacing:3px; line-height:1; text-align:center;
     background:linear-gradient(180deg,#fff 0%,#c9c9d4 40%,#6a6a75 60%,#e8e8f0 100%);
     -webkit-background-clip:text; background-clip:text; color:transparent;
-    filter:drop-shadow(0 4px 18px rgba(200,200,220,.25)); margin-bottom:4px; }
-  .subtitle { color:#7CFF6B; letter-spacing:6px; font-size:clamp(10px,2.2vw,15px); margin-bottom:6px; }
-  .tagline { color:#888; letter-spacing:2px; font-size:11px; margin-bottom:14px; font-family:Arial,sans-serif; font-weight:bold; }
-  .balance { color:#ffd94d; letter-spacing:3px; font-size:clamp(15px,3vw,20px); margin-bottom:12px;
-    border:1px solid #6b5a1e; padding:8px 22px; background:rgba(255,217,77,.06); }
-  /* bet panel */
-  .betpanel { width:min(430px,94vw); border:1px solid #2a2a32; background:#0b0b0f; padding:12px 14px; margin-bottom:12px; }
-  .betrow { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
-  .betrow:last-child { margin-bottom:0; }
-  .betlabel { color:#888; font-size:11px; letter-spacing:3px; font-family:Arial,sans-serif; font-weight:bold; }
-  .stepper { display:flex; align-items:center; gap:10px; }
-  .stepbtn { width:34px; height:34px; background:#1a1a20; color:#fff; border:1px solid #3a3a44; font-size:18px; cursor:pointer; font-family:'Arial Black',Arial,sans-serif; }
-  .stepbtn:active { transform:scale(.92); }
-  .betamt { color:#fff; font-size:20px; width:96px; text-align:center; background:#111; border:1px solid #3a3a44;
-    font-family:'Arial Black',Arial,sans-serif; padding:4px 2px; -moz-appearance:textfield; }
-  .betamt::-webkit-outer-spin-button, .betamt::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
-  .timebtns { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
-  .tbtn { background:#1a1a20; color:#999; border:1px solid #3a3a44; font-family:'Arial Black',Arial,sans-serif; font-size:11px; padding:8px 9px; cursor:pointer; letter-spacing:1px; }
-  .tbtn small { display:block; color:#7CFF6B; font-size:10px; }
-  .tbtn.sel { border-color:#7CFF6B; color:#fff; background:#142014; }
-  .winpreview { color:#7CFF6B; font-size:13px; letter-spacing:2px; margin-top:2px; }
+    filter:drop-shadow(0 4px 18px rgba(200,200,220,.25)); }
+  .sub { color:#888; letter-spacing:4px; font-size:11px; margin:4px 0 8px; font-family:Arial,sans-serif; font-weight:bold; }
+  #hud { display:flex; gap:10px; align-items:stretch; width:min(480px,100%); margin-bottom:8px; }
+  .panel { flex:1; border:1px solid #2a2a32; background:#0b0b0f; padding:6px 10px; text-align:center; }
+  .panel .lbl { color:#888; font-size:9px; letter-spacing:3px; font-family:Arial,sans-serif; font-weight:bold; }
+  .panel .val { color:#fff; font-size:20px; letter-spacing:1px; }
+  .panel .val.gold { color:#ffd94d; }
+  #nextbox { display:flex; align-items:center; justify-content:center; gap:8px; }
+  #nextbox canvas { display:block; }
+  #stage { position:relative; width:min(480px,100%); flex:1; min-height:0; }
+  #game { display:block; width:100%; height:100%; background:#0a0a0e;
+    border:1px solid #2a2a32; border-radius:6px; }
+  .overlay { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:rgba(0,0,0,.86); z-index:10; text-align:center; padding:18px; border-radius:6px; }
+  .hidden { display:none !important; }
+  .big { font-size:clamp(30px,7vw,54px); letter-spacing:3px; line-height:1;
+    background:linear-gradient(180deg,#fff 0%,#c9c9d4 40%,#6a6a75 60%,#e8e8f0 100%);
+    -webkit-background-clip:text; background-clip:text; color:transparent; margin-bottom:10px; }
+  .tagline { color:#888; letter-spacing:2px; font-size:11px; margin-bottom:16px; font-family:Arial,sans-serif; font-weight:bold; line-height:1.8; }
+  .tagline b { color:#bbb; }
   .bigbtn { background:linear-gradient(180deg,#f2f2f6,#c9c9d4 55%,#a9a9b4); color:#000; border:none; cursor:pointer;
-    font-family:'Arial Black',Arial,sans-serif; letter-spacing:3px; font-size:20px; padding:16px 54px; text-transform:uppercase;
-    box-shadow:0 6px 30px rgba(200,200,220,.3); transition:transform .12s ease; margin-bottom:10px; }
+    font-family:'Arial Black',Arial,sans-serif; letter-spacing:3px; font-size:18px; padding:15px 48px; text-transform:uppercase;
+    box-shadow:0 6px 30px rgba(200,200,220,.3); transition:transform .12s ease; margin-bottom:12px; }
   .bigbtn:active { transform:scale(.96); }
-  .ghostbtn { background:transparent; color:#7CFF6B; border:1px solid #2d5a2d; cursor:pointer;
-    font-family:'Arial Black',Arial,sans-serif; letter-spacing:3px; font-size:14px; padding:12px 34px; margin-bottom:14px; }
+  .ghostbtn { background:transparent; color:#999; border:1px solid #3a3a44; cursor:pointer;
+    font-family:'Arial Black',Arial,sans-serif; letter-spacing:2px; font-size:12px; padding:10px 26px; }
   .ghostbtn:active { transform:scale(.96); }
-  .controls-hint { color:#666; font-size:11px; letter-spacing:2px; line-height:1.9; font-family:Arial,sans-serif; font-weight:bold; }
-  .controls-hint b { color:#999; }
-  /* garage */
-  .garage { width:min(480px,96vw); max-height:92vh; overflow-y:auto; }
-  .gsec { color:#7CFF6B; letter-spacing:4px; font-size:14px; margin:14px 0 8px; text-align:left; }
-  .tier { display:flex; align-items:center; gap:12px; border:1px solid #2a2a32; background:#0b0b0f; padding:10px 12px; margin-bottom:8px; text-align:left; }
-  .tier img { width:52px; height:52px; object-fit:contain; background:#000; border:1px solid #222; flex-shrink:0; }
-  .tier .tinfo { flex:1; }
-  .tier .tname { color:#fff; font-size:14px; letter-spacing:2px; }
-  .tier .tdesc { color:#777; font-size:10px; letter-spacing:1px; font-family:Arial,sans-serif; margin-top:3px; }
-  .tier .tbtn2 { font-family:'Arial Black',Arial,sans-serif; font-size:11px; letter-spacing:1px; padding:10px 14px; cursor:pointer; border:1px solid #3a3a44; background:#1a1a20; color:#fff; white-space:nowrap; }
-  .tier .tbtn2:disabled { opacity:.45; cursor:default; }
-  .tier .tbtn2.buy { border-color:#7CFF6B; color:#7CFF6B; }
-  .tier .tbtn2.equipped { border-color:#ffd94d; color:#ffd94d; }
-  #finalScore { font-size:clamp(30px,6vw,54px); color:#fff; letter-spacing:3px; margin:8px 0 2px; }
-  #runPoints { color:#ffd94d; letter-spacing:2px; font-size:16px; margin-bottom:4px; }
-  #betResult { letter-spacing:2px; font-size:15px; margin-bottom:4px; }
-  #finalBest { color:#7CFF6B; letter-spacing:3px; font-size:14px; margin-bottom:22px; }
-  #crashMsg { color:#ff5b5b; letter-spacing:4px; font-size:clamp(16px,3.4vw,24px); margin-bottom:4px; }
-  .brand { position:fixed; bottom:12px; width:100%; text-align:center; color:#444; font-size:11px; letter-spacing:4px; z-index:5; pointer-events:none; }
-  #pop { position:fixed; top:20%; width:100%; text-align:center; z-index:6; pointer-events:none;
-    font-size:clamp(24px,5vw,48px); letter-spacing:4px; color:#7CFF6B;
-    text-shadow:0 0 24px rgba(124,255,107,.6); opacity:0; transition:opacity .25s ease; }
+  #foot { width:min(480px,100%); display:flex; justify-content:space-between; align-items:center; padding-top:8px; }
+  #foot a { color:#888; font-size:10px; letter-spacing:2px; text-decoration:none; font-family:Arial,sans-serif; font-weight:bold; }
+  #foot a:hover { color:#fff; }
+  #foot button { background:transparent; color:#888; border:1px solid #3a3a44; cursor:pointer;
+    font-family:'Arial Black',Arial,sans-serif; letter-spacing:2px; font-size:10px; padding:7px 14px; }
+  #foot button:active { transform:scale(.96); }
 </style>
 </head>
 <body>
-<canvas id="game"></canvas>
-<div id="pop"></div>
-
-<div class="overlay" id="startScreen">
-  <h1 class="title">HIGHWAY<br>RUN</h1>
-  <div class="subtitle">★ DYINGTOLIVE ★</div>
-  <div class="tagline">BET ON YOURSELF // STANCED S15 // NO BRAKES</div>
-  <div class="balance" id="menuBalance">★ 150 PTS</div>
-  <div class="betpanel">
-    <div class="betrow">
-      <span class="betlabel">BET</span>
-      <div class="stepper">
-        <button class="stepbtn" id="betDown">−</button>
-        <input class="betamt" id="betAmt" type="number" min="0" step="1" value="50" inputmode="numeric">
-        <button class="stepbtn" id="betUp">+</button>
-        <button class="stepbtn" id="betMax" style="width:auto; padding:0 10px; font-size:11px; letter-spacing:1px;">MAX</button>
-      </div>
-    </div>
-    <div class="betrow">
-      <span class="betlabel">SURVIVE</span>
-      <div class="timebtns" id="timeBtns"></div>
-    </div>
-    <div class="winpreview" id="winPreview">WIN 125 PTS</div>
+<div id="wrap">
+  <h1 class="title">FRUIT MERGE</h1>
+  <div class="sub">★ DYINGTOLIVE ★</div>
+  <div id="hud">
+    <div class="panel"><div class="lbl">SCORE</div><div class="val gold" id="score">0</div></div>
+    <div class="panel"><div class="lbl">BEST</div><div class="val" id="best">0</div></div>
+    <div class="panel"><div class="lbl">NEXT</div><div id="nextbox"><canvas id="nextcv" width="44" height="44"></canvas></div></div>
   </div>
-  <button class="bigbtn" id="startBtn">SEND IT</button>
-  <button class="ghostbtn" id="garageBtn">GARAGE</button>
-  <div class="controls-hint"><b>← →</b> / <b>A D</b> — SWITCH LANES &nbsp;•&nbsp; TAP SIDES ON PHONE<br>DODGE THE HELLCATS. SURVIVE YOUR BET.</div>
-</div>
-
-<div class="overlay hidden" id="garageScreen">
-  <div class="garage">
-    <h1 class="title" style="font-size:clamp(28px,6vw,52px)">GARAGE</h1>
-    <div class="balance" id="garageBalance">★ 150 PTS</div>
-    <div class="gsec">// EXHAUST FLAMES</div>
-    <div id="flameTiers"></div>
-    <div class="gsec">// S15 BUILD</div>
-    <div id="carTiers"></div>
-    <div style="height:8px"></div>
-    <button class="bigbtn" id="garageBack" style="font-size:16px; padding:13px 40px;">BACK</button>
+  <div id="stage">
+    <canvas id="game"></canvas>
+    <div class="overlay" id="startov">
+      <div class="big">FRUIT<br>MERGE</div>
+      <div class="tagline">DROP FRUITS — MERGE MATCHING PAIRS<br>CHAIN THEM ALL THE WAY TO THE <b>WATERMELON</b><br><br>MOVE TO AIM — TAP / CLICK TO DROP<br>DON'T LET THE STACK CROSS THE LINE</div>
+      <button class="bigbtn" id="startbtn">PLAY</button>
+    </div>
+    <div class="overlay hidden" id="overov">
+      <div class="big">GAME<br>OVER</div>
+      <div class="tagline">SCORE <b id="finalscore" style="color:#ffd94d">0</b><br>BEST <b id="finalbest" style="color:#fff">0</b></div>
+      <button class="bigbtn" id="againbtn">PLAY AGAIN</button>
+    </div>
+  </div>
+  <div id="foot">
+    <a href="https://dyingtolive-jp.github.io/dyingtolive-jp/">★ DYINGTOLIVE ★</a>
+    <button id="restartbtn">RESTART</button>
   </div>
 </div>
-
-<div class="overlay hidden" id="overScreen">
-  <div id="crashMsg">WRECKED</div>
-  <h1 class="title" style="font-size:clamp(30px,6vw,60px)">GAME OVER</h1>
-  <div id="finalScore">0</div>
-  <div id="runPoints">RUN +0 PTS</div>
-  <div id="betResult"></div>
-  <div id="finalBest">BEST: 0</div>
-  <button class="bigbtn" id="retryBtn">RUN IT BACK</button>
-  <button class="ghostbtn" id="overGarageBtn">GARAGE</button>
-</div>
-
-<div class="brand">DYINGTOLIVE.JP ★ STATIC BUILDS ONLY</div>
-
 <script>
-'use strict';
-/* ============ HIGHWAY RUN x DYINGTOLIVE — meta edition ============ */
-const cv = document.getElementById('game');
-const ctx = cv.getContext('2d');
-let W = 0, H = 0, DPR = 1;
+"use strict";
+/* FRUIT MERGE — drop, merge, grow the watermelon. */
+const TIERS = [
+  { name:'Cherry',     r:16, color:'#e0243b', dark:'#8f1020', score:1  },
+  { name:'Strawberry', r:24, color:'#ff4d6d', dark:'#b81f3f', score:3  },
+  { name:'Grape',      r:34, color:'#9b5de5', dark:'#5f2ea6', score:6  },
+  { name:'Dekopon',    r:46, color:'#ff9f1c', dark:'#b35f00', score:10 },
+  { name:'Persimmon',  r:58, color:'#ff6b35', dark:'#b23a10', score:15 },
+  { name:'Apple',      r:72, color:'#ef233c', dark:'#9c0f22', score:21 },
+  { name:'Pear',       r:88, color:'#d9e021', dark:'#8a9310', score:28 },
+  { name:'Peach',      r:106,color:'#ffb3c1', dark:'#c97a8a', score:36 },
+  { name:'Pineapple',  r:126,color:'#ffd60a', dark:'#b89a00', score:45 },
+  { name:'Melon',      r:150,color:'#7bd88a', dark:'#3f9e4d', score:55 },
+  { name:'Watermelon', r:180,color:'#2a9d4a', dark:'#14632a', score:66 },
+];
+const MAX_SPAWN_TIER = 4; // only the 5 smallest drop from the top
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const nextcv = document.getElementById('nextcv');
+const nctx = nextcv.getContext('2d');
+const scoreEl = document.getElementById('score');
+const bestEl = document.getElementById('best');
+const startov = document.getElementById('startov');
+const overov = document.getElementById('overov');
+
+let W = 0, H = 0, DPR = 1, SCALE = 1; // logical box size + fruit scale
+let fruits = [];      // {x,y,vx,vy,tier,dead}
+let popups = [];      // {x,y,text,life}
+let current = null;   // fruit held at the top, not yet dropped
+let nextTier = 0;
+let score = 0;
+let best = +(localStorage.getItem('dtl-fruit-best') || 0);
+let running = false, over = false;
+let dropX = 0, dropCooldown = 0;
+let overTimer = 0;
+let last = 0, acc = 0;
+const STEP = 1000 / 120;
+
+bestEl.textContent = best;
+
 function resize() {
+  const stage = document.getElementById('stage');
+  const rect = stage.getBoundingClientRect();
   DPR = Math.min(window.devicePixelRatio || 1, 2);
-  W = window.innerWidth; H = window.innerHeight;
-  cv.width = W * DPR; cv.height = H * DPR;
-  cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  W = Math.max(200, rect.width);
+  H = Math.max(300, rect.height);
+  canvas.width = Math.round(W * DPR);
+  canvas.height = Math.round(H * DPR);
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  layout();
+  // fruit radii are tuned for a ~420px wide box; scale to fit
+  SCALE = Math.min(1, W / 420);
+  if (current) current.x = clamp(dropX, rad(current.tier), W - rad(current.tier));
+  drawNext();
 }
-window.addEventListener('resize', resize);
+function rad(tier) { return TIERS[tier].r * SCALE; }
+function lineY() { return H * 0.18; }
+function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
+function randTier() { return Math.floor(Math.random() * (MAX_SPAWN_TIER + 1)); }
 
-/* ---------- persistent meta: points, upgrades ---------- */
-let META = {
-  points: parseInt(localStorage.getItem('dtl_hw_points') ?? '150', 10),
-  flame: parseInt(localStorage.getItem('dtl_hw_flame') ?? '0', 10),
-  car: parseInt(localStorage.getItem('dtl_hw_car') ?? '0', 10)
-};
-function saveMeta() {
-  localStorage.setItem('dtl_hw_points', String(META.points));
-  localStorage.setItem('dtl_hw_flame', String(META.flame));
-  localStorage.setItem('dtl_hw_car', String(META.car));
+function newGame() {
+  fruits = []; popups = [];
+  score = 0; scoreEl.textContent = '0';
+  nextTier = randTier();
+  over = false; overTimer = 0; dropCooldown = 0;
+  spawnHeld();
+  running = true;
+  overov.classList.add('hidden');
+  startov.classList.add('hidden');
 }
-const FLAME_TIERS = [
-  { name: 'STOCK',   price: 0,    desc: 'factory pops',            size: 1.0, rate: 1.0, cols: ['#ffd94d', '#ff9030', '#ff4d00', '#ff4d00', '#6db4ff'] },
-  { name: 'LOUD',    price: 1800,  desc: 'bigger, angrier flames',  size: 1.6, rate: 1.5, cols: ['#ffe97a', '#ffab40', '#ff5a00', '#ff3d00', '#6db4ff'] },
-  { name: 'SPICY',   price: 5400,  desc: 'blue/purple core burn',   size: 1.9, rate: 1.8, cols: ['#e0e7ff', '#818cf8', '#3b82f6', '#a855f7', '#ff9030'] },
-  { name: 'INFERNO', price: 13500, desc: 'screen-melting fury',     size: 2.6, rate: 2.3, cols: ['#fff7cc', '#ffb300', '#ff5a00', '#ff2200', '#7c3aed'] }
-];
-const CAR_TIERS = [
-  { name: 'SKETCH', price: 0,    desc: 'hand-drawn beater',   img: null },
-  { name: 'STREET', price: 3375,  desc: 'illustrated build',   img: 'img/car1.png' },
-  { name: 'SHOW',   price: 9000,  desc: 'detailed render',     img: 'img/car2.png' },
-  { name: 'PHOTO',  price: 22500, desc: 'the real thing',      img: 'img/car3.png' }
-];
-const BET_TIMES = [
-  { s: 15, mult: 1.5 }, { s: 30, mult: 2.5 }, { s: 45, mult: 4 }, { s: 60, mult: 6 }, { s: 90, mult: 10 }
-];
-const BET_AMOUNTS = [0, 10, 25, 50, 100, 250, 500, 1000];
-// preload car sprites
-const carSprites = [null, null, null, null];
-for (let i = 1; i <= 3; i++) { const im = new Image(); im.src = 'img/car' + i + '.png'; carSprites[i] = im; }
-
-/* ---------- layout ---------- */
-let roadW, roadX, laneW, laneX = [];
-function layout() {
-  roadW = Math.min(W * 0.78, 460);
-  roadX = (W - roadW) / 2;
-  laneW = roadW / 3;
-  laneX = [0, 1, 2].map(i => roadX + laneW * (i + 0.5));
+function spawnHeld() {
+  current = { x: W / 2, y: lineY() - rad(nextTier) - 8, vx: 0, vy: 0, tier: nextTier, dead: false, held: true };
+  dropX = W / 2;
+  nextTier = randTier();
+  drawNext();
 }
-
-/* ---------- state ---------- */
-const S = {
-  mode: 'menu', t: 0,
-  speed: 0, baseSpeed: 8.5, maxSpeed: 24,
-  dist: 0, score: 0, nearMiss: 0,
-  player: { lane: 1, x: 0, tx: 0 },
-  npcs: [], boards: [], poles: [], parts: [],
-  shake: 0, lastFree: 1, sinceSpawn: 9999, laneAge: [0, 0, 0], squirm: 0,
-  bet: { amount: 0, time: 30, mult: 2.5, elapsed: 0, won: false },
-  best: parseInt(localStorage.getItem('dtl_highway_best') || '0', 10)
-};
-const CAR_W = 56, CAR_H = 108;
-
-function reset() {
-  S.t = 0; S.speed = S.baseSpeed; S.dist = 0; S.score = 0; S.nearMiss = 0;
-  S.player = { lane: 1, x: laneX[1], tx: laneX[1] };
-  S.npcs = []; S.boards = []; S.poles = []; S.parts = [];
-  S.shake = 0; S.lastFree = 1; S.sinceSpawn = 9999; S.laneAge = [0, 0, 0]; S.squirm = 0;
-  for (let y = -100; y < H + 200; y += 130) S.poles.push({ y, side: ((y / 130) | 0) % 2 ? 1 : -1 });
-  for (let i = 0; i < 4; i++) S.boards.push({ y: -i * 900 - 300, side: i % 2 ? 1 : -1, ad: i % 4 });
-}
-
-/* ---------- input ---------- */
-const keys = {};
-window.addEventListener('keydown', e => {
-  if (['ArrowLeft', 'ArrowRight', ' '].includes(e.key)) e.preventDefault();
-  keys[e.key.toLowerCase()] = true;
-  if (S.mode === 'play') {
-    if (e.key === 'ArrowLeft' || e.key === 'a') moveLane(-1);
-    if (e.key === 'ArrowRight' || e.key === 'd') moveLane(1);
-  } else if (e.key === 'Enter' || e.key === ' ') startGame();
-});
-window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
-function moveLane(d) {
-  const p = S.player;
-  const nl = Math.max(0, Math.min(2, p.lane + d));
-  if (nl !== p.lane) {
-    p.lane = nl; p.tx = laneX[nl];
-    const py = H * 0.86;
-    for (let i = 0; i < 22; i++) {
-      S.parts.push({
-        x: p.x + (Math.random() - .5) * 44, y: py + 26 + Math.random() * 14,
-        vx: (Math.random() - .5) * 4 - d * 3, vy: 0.8 + Math.random() * 2.4,
-        life: 30 + Math.random() * 24, color: 'rgba(210,210,218,.5)', s: 5 + Math.random() * 6
-      });
+function drawFruitShape(c, x, y, tier, r) {
+  const t = TIERS[tier];
+  const g = c.createRadialGradient(x - r * 0.35, y - r * 0.4, r * 0.1, x, y, r);
+  g.addColorStop(0, t.color);
+  g.addColorStop(0.75, t.color);
+  g.addColorStop(1, t.dark);
+  c.fillStyle = g;
+  c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
+  // rim
+  c.strokeStyle = 'rgba(0,0,0,.35)'; c.lineWidth = Math.max(1, r * 0.04);
+  c.beginPath(); c.arc(x, y, r - c.lineWidth / 2, 0, Math.PI * 2); c.stroke();
+  // gloss
+  c.fillStyle = 'rgba(255,255,255,.35)';
+  c.beginPath(); c.ellipse(x - r * 0.38, y - r * 0.42, r * 0.22, r * 0.13, -0.6, 0, Math.PI * 2); c.fill();
+  // stem + leaf for mid tiers and up
+  if (tier >= 2) {
+    c.strokeStyle = '#5a3a1a'; c.lineWidth = Math.max(1.5, r * 0.05); c.lineCap = 'round';
+    c.beginPath(); c.moveTo(x, y - r + 1); c.quadraticCurveTo(x + r * 0.05, y - r - r * 0.16, x + r * 0.12, y - r - r * 0.18); c.stroke();
+    c.fillStyle = '#3fae5a';
+    c.beginPath(); c.ellipse(x + r * 0.22, y - r - r * 0.10, r * 0.20, r * 0.09, -0.5, 0, Math.PI * 2); c.fill();
+  }
+  // watermelon stripes
+  if (tier === 10) {
+    c.strokeStyle = 'rgba(0,60,20,.5)'; c.lineWidth = Math.max(2, r * 0.05);
+    for (const off of [-0.55, -0.2, 0.2, 0.55]) {
+      c.beginPath();
+      c.moveTo(x + r * off, y - r * 0.85);
+      c.quadraticCurveTo(x + r * off * 0.7, y, x + r * off, y + r * 0.85);
+      c.stroke();
     }
-    S.shake = Math.max(S.shake, 2.5);
   }
 }
-let tsX = 0;
-cv.addEventListener('touchstart', e => {
-  e.preventDefault();
-  tsX = e.changedTouches[0].clientX;
-  if (S.mode !== 'play') return;
-  const x = e.changedTouches[0].clientX;
-  if (x < W * 0.4) moveLane(-1);
-  else if (x > W * 0.6) moveLane(1);
-}, { passive: false });
-cv.addEventListener('touchmove', e => {
-  e.preventDefault();
-  if (S.mode !== 'play') return;
-  const x = e.changedTouches[0].clientX;
-  if (x - tsX > 34) { moveLane(1); tsX = x; }
-  else if (x - tsX < -34) { moveLane(-1); tsX = x; }
-}, { passive: false });
-
-/* ---------- spawning: every lane rotates, always a way through ---------- */
-const HELLCAT_COLORS = ['#15151a', '#8f1212', '#d8d8de', '#3d1a5c', '#b35c12', '#2a2d33', '#101014'];
-function spawnWave() {
-  S.laneAge = S.laneAge.map(a => a + 1);
-  let mustBlock = 0;
-  for (let l = 1; l < 3; l++) if (S.laneAge[l] > S.laneAge[mustBlock]) mustBlock = l;
-  const lastFree = S.lastFree;
-  const freeOpts = [0, 1, 2].filter(l => l !== mustBlock && Math.abs(l - lastFree) <= 1);
-  const freeLane = freeOpts[Math.random() * freeOpts.length | 0];
-  const others = [0, 1, 2].filter(l => l !== freeLane && l !== mustBlock).sort(() => Math.random() - 0.5);
-  const blocked = [mustBlock].concat(Math.random() < 0.45 && others.length ? [others[0]] : []);
-  for (let i = 0; i < blocked.length; i++) {
-    const lane = blocked[i];
-    S.laneAge[lane] = 0;
-    const r = Math.random();
-    let type = 'hellcat';
-    if (r > 0.82) type = Math.random() < 0.5 ? 'truck' : 'sedan';
-    // UNIFORM traffic speed: the whole field scrolls as one rigid pattern,
-    // so cars can never drift together into an unpassable 3-wide wall.
-    const npcSpeed = S.speed * 0.55;
-    S.npcs.push({
-      lane, x: laneX[lane], y: -520 - i * (90 + Math.random() * 40),
-      w: type === 'truck' ? CAR_W + 14 : CAR_W,
-      h: type === 'truck' ? CAR_H + 46 : CAR_H,
-      type, color: HELLCAT_COLORS[Math.random() * HELLCAT_COLORS.length | 0],
-      npcSpeed, passed: false
-    });
+function drawNext() {
+  const s = 44;
+  nctx.clearRect(0, 0, s, s);
+  const r = Math.min(rad(nextTier), 20);
+  drawFruitShape(nctx, s / 2, s / 2, nextTier, r);
+}
+function drop() {
+  if (!running || over || !current || dropCooldown > 0) return;
+  const f = current;
+  f.held = false;
+  f.y = Math.min(f.y, lineY() - rad(f.tier) - 2);
+  fruits.push(f);
+  current = null;
+  dropCooldown = 450;
+}
+function step(dt) {
+  // dt in ms; fixed 120Hz steps
+  acc += dt;
+  let n = 0;
+  while (acc >= STEP && n < 8) { physics(STEP / 1000); acc -= STEP; n++; }
+  if (n === 8) acc = 0;
+  if (dropCooldown > 0) dropCooldown -= dt;
+  if (!current && running && !over && dropCooldown <= 0) spawnHeld();
+  // popups
+  for (const p of popups) { p.y -= dt * 0.03; p.life -= dt; }
+  popups = popups.filter(p => p.life > 0);
+  // game-over check: a settled fruit resting above the line
+  if (running && !over) {
+    let danger = false;
+    for (const f of fruits) {
+      if (f.dead) continue;
+      const speed = Math.hypot(f.vx, f.vy);
+      if (f.y - rad(f.tier) < lineY() && speed < 30 && f.y > 0) { danger = true; break; }
+    }
+    overTimer = danger ? overTimer + dt : 0;
+    if (overTimer > 1200) endGame();
   }
-  S.lastFree = freeLane;
-  S.sinceSpawn = 0;
 }
-
-/* ---------- particles / popups ---------- */
-function burst(x, y, n, color) {
-  for (let i = 0; i < n; i++)
-    S.parts.push({ x, y, vx: (Math.random() - .5) * 8, vy: (Math.random() - .5) * 8 - 2, life: 26 + Math.random() * 22, color, s: 2 + Math.random() * 3 });
-}
-const popEl = document.getElementById('pop');
-let popTimer = null;
-function pop(txt, color) {
-  popEl.textContent = txt;
-  popEl.style.color = color || '#7CFF6B';
-  popEl.style.opacity = 1;
-  clearTimeout(popTimer);
-  popTimer = setTimeout(() => popEl.style.opacity = 0, 900);
-}
-
-/* ---------- update ---------- */
-function update(dt) {
-  S.t += dt;
-  S.speed = Math.min(S.maxSpeed, S.speed + dt * 0.011);
-  S.dist += S.speed * dt;
-
-  const p = S.player;
-  p.x += (p.tx - p.x) * Math.min(1, dt * 0.30);
-  const py = H * 0.86;
-  const changing = Math.abs(p.tx - p.x) > 5 ? 1 : 0;
-  S.squirm = changing;
-  if (changing) {
-    S.speed = Math.max(S.baseSpeed, S.speed - dt * 0.03);
-    if (Math.random() < 0.55) {
-      for (let k = 0; k < 2; k++) {
-        S.parts.push({
-          x: p.x + (Math.random() - .5) * 40, y: py + 28 + Math.random() * 10,
-          vx: (Math.random() - .5) * 3, vy: 1 + Math.random() * 2,
-          life: 22 + Math.random() * 16, color: 'rgba(210,210,218,.42)', s: 4 + Math.random() * 5
-        });
+function physics(dt) {
+  const g = 1500; // px/s^2
+  for (const f of fruits) {
+    if (f.dead) continue;
+    f.vy += g * dt;
+    f.vx *= 0.999; f.vy *= 0.999;
+    f.x += f.vx * dt;
+    f.y += f.vy * dt;
+    const r = rad(f.tier);
+    if (f.x < r) { f.x = r; f.vx = Math.abs(f.vx) * 0.2; }
+    if (f.x > W - r) { f.x = W - r; f.vx = -Math.abs(f.vx) * 0.2; }
+    if (f.y > H - r) { f.y = H - r; f.vy = -Math.abs(f.vy) * 0.15; f.vx *= 0.8; }
+  }
+  // pairwise collisions + merges (repeat until stable, capped)
+  for (let iter = 0; iter < 4; iter++) {
+    let merged = false;
+    for (let i = 0; i < fruits.length; i++) {
+      const a = fruits[i];
+      if (a.dead) continue;
+      for (let j = i + 1; j < fruits.length; j++) {
+        const b = fruits[j];
+        if (b.dead) continue;
+        const ra = rad(a.tier), rb = rad(b.tier);
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const d = Math.hypot(dx, dy), min = ra + rb;
+        if (d >= min || d === 0) continue;
+        if (a.tier === b.tier) {
+          a.dead = true; b.dead = true;
+          if (a.tier < TIERS.length - 1) {
+            const nt = a.tier + 1;
+            fruits.push({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2,
+              vx: (a.vx + b.vx) / 2, vy: Math.min(a.vy, b.vy) - 60,
+              tier: nt, dead: false });
+          }
+          const pts = TIERS[a.tier].score;
+          score += pts;
+          scoreEl.textContent = score;
+          popups.push({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, text: '+' + pts, life: 900 });
+          merged = true;
+        } else {
+          // positional correction + simple velocity exchange
+          const nx = dx / d, ny = dy / d;
+          const overlap = (min - d) / 2;
+          const total = ra + rb;
+          a.x -= nx * overlap * (rb / total) * 2; a.y -= ny * overlap * (rb / total) * 2;
+          b.x += nx * overlap * (ra / total) * 2; b.y += ny * overlap * (ra / total) * 2;
+          const rvn = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
+          if (rvn < 0) {
+            const imp = -rvn * 0.6;
+            a.vx -= nx * imp; a.vy -= ny * imp;
+            b.vx += nx * imp; b.vy += ny * imp;
+          }
+        }
       }
     }
+    fruits = fruits.filter(f => !f.dead);
+    if (!merged) break;
   }
-
-  // bet clock
-  const b = S.bet;
-  if (b.amount > 0 && !b.won) {
-    b.elapsed += dt / 60;
-    if (b.elapsed >= b.time) {
-      b.won = true;
-      const win = Math.round(b.amount * b.mult);
-      META.points += win; saveMeta();
-      pop('BET WON +' + win, '#ffd94d');
-      burst(p.x, py - 60, 22, '#ffd94d');
-    }
-  }
-
-  S.sinceSpawn += S.speed * dt;
-  // wide enough that each wave fully passes before you must commit to the next wave's lane
-  const minGap = 700 + S.speed * 25;
-  if (S.sinceSpawn >= minGap) spawnWave();
-
-  const hitShrink = 0.72;
-  for (let i = S.npcs.length - 1; i >= 0; i--) {
-    const n = S.npcs[i];
-    n.y += (S.speed - n.npcSpeed) * dt;
-    if (n.y > H + 220) { S.npcs.splice(i, 1); continue; }
-    if (!n.passed && n.y - n.h / 2 > py + CAR_H / 2) {
-      n.passed = true;
-      const gap = Math.abs(n.x - p.x) - (n.w + CAR_W) / 2;
-      if (gap < 34 && gap > -10) {
-        S.nearMiss++; S.score += 60;
-        pop('CLOSE +60');
-        S.shake = Math.max(S.shake, 3);
-        burst(p.x, py - 40, 6, '#7CFF6B');
-      }
-    }
-    const pw = CAR_W * hitShrink, ph = CAR_H * hitShrink;
-    const nw = n.w * hitShrink, nh = n.h * hitShrink;
-    if (Math.abs(n.x - p.x) < (pw + nw) / 2 && Math.abs(n.y - py) < (ph + nh) / 2) {
-      die(); return;
-    }
-  }
-
-  const dy = S.speed * dt;
-  for (const pl of S.poles) { pl.y += dy; if (pl.y > H + 60) { pl.y -= H + 260; pl.side *= -1; } }
-  for (const bd of S.boards) { bd.y += dy; if (bd.y > H + 120) { bd.y -= H + 1900; bd.side *= -1; bd.ad = (bd.ad + 1) % 4; } }
-
-  for (let i = S.parts.length - 1; i >= 0; i--) {
-    const pt = S.parts[i];
-    pt.x += pt.vx * dt; pt.y += pt.vy * dt + S.speed * 0.4 * dt;
-    pt.vy += 0.12 * dt; pt.life -= dt;
-    if (pt.life <= 0) S.parts.splice(i, 1);
-  }
-
-  // exhaust flames — tiered
-  const heat = Math.max(0, Math.min(1, (S.speed - S.baseSpeed) / (S.maxSpeed - S.baseSpeed)));
-  const FT = FLAME_TIERS[META.flame];
-  if (Math.random() < (0.22 + heat * 0.68) * FT.rate) {
-    S.parts.push({
-      x: p.x - 13 + (Math.random() - .5) * 6, y: py + CAR_H / 2 - 2,
-      vx: (Math.random() - .5) * 1.6, vy: 2.5 + Math.random() * 3 + heat * 2.5,
-      life: 9 + Math.random() * 9, color: FT.cols[Math.random() * FT.cols.length | 0],
-      s: (2.5 + heat * 5 + Math.random() * 2) * FT.size
-    });
-  }
-  if (S.t % 5 < dt && S.speed > 12) burst(p.x + (Math.random() - .5) * 20, py + CAR_H / 2, 1, 'rgba(140,140,150,.35)');
-
-  const rumble = heat * 2.6;
-  S.shake = Math.max(rumble, S.shake - dt * 1.4);
-  S.score += S.speed * dt * 0.12;
 }
-
-function die() {
-  S.mode = 'dead';
-  S.shake = 16;
-  const p = S.player, py = H * 0.86;
-  burst(p.x, py, 34, '#ff5b5b');
-  burst(p.x, py, 22, '#ffb14d');
-  burst(p.x, py, 18, '#c9c9d4');
-  const sc = Math.floor(S.score);
-  const earned = Math.floor(sc / 40);
-  META.points += earned;
-  let betLine = '', betColor = '#888';
-  if (S.bet.amount > 0) {
-    if (S.bet.won) { betLine = 'BET WON +' + Math.round(S.bet.amount * S.bet.mult) + ' PTS'; betColor = '#7CFF6B'; }
-    else { betLine = 'BET LOST −' + S.bet.amount + ' PTS'; betColor = '#ff5b5b'; }
-  }
-  saveMeta();
-  if (sc > S.best) { S.best = sc; localStorage.setItem('dtl_highway_best', String(sc)); }
-  document.getElementById('crashMsg').textContent = S.bet.won ? 'CASHED OUT' : (S.nearMiss > 4 ? 'SENT IT TOO HARD' : 'WRECKED');
-  document.getElementById('finalScore').textContent = sc.toLocaleString();
-  document.getElementById('runPoints').textContent = 'RUN +' + earned + ' PTS';
-  const br = document.getElementById('betResult');
-  br.textContent = betLine; br.style.color = betColor;
-  document.getElementById('finalBest').textContent = 'BEST ' + S.best.toLocaleString() + ' ★ NEAR MISS x' + S.nearMiss + ' ★ ' + META.points.toLocaleString() + ' PTS';
-  refreshBalance();
-  setTimeout(() => document.getElementById('overScreen').classList.remove('hidden'), 700);
-}
-
-/* ---------- drawing ---------- */
-function rr(x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
-}
-function shade(hex, amt) {
-  const n = parseInt(hex.slice(1), 16);
-  const r = Math.max(0, Math.min(255, (n >> 16) + amt));
-  const g = Math.max(0, Math.min(255, ((n >> 8) & 255) + amt));
-  const b = Math.max(0, Math.min(255, (n & 255) + amt));
-  return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
-}
-function drawWheel(x, y, w, h, camber) {
-  ctx.save();
-  ctx.translate(x, y); ctx.rotate(camber);
-  ctx.fillStyle = '#0c0c0e';
-  rr(-w / 2, -h / 2, w, h, 4); ctx.fill();
-  ctx.strokeStyle = '#c9c9d4'; ctx.lineWidth = 2.5;
-  rr(-w / 2, -h / 2, w, h, 4); ctx.stroke();
-  ctx.fillStyle = '#3a3a42';
-  ctx.fillRect(-w / 2 + 3, -h / 2 + 3, w - 6, h - 6);
-  ctx.restore();
-}
-
-/* player S15: vector SKETCH tier, or AI sprite tiers */
-function drawS15(x, y) {
-  const w = CAR_W, h = CAR_H;
-  const sq = S.squirm ? Math.sin(S.t * 0.9) * 0.07 : 0;
-  const jx = S.squirm ? Math.sin(S.t * 1.3) * 3 : 0;
-  ctx.save();
-  ctx.translate(x + jx, y);
-  ctx.rotate(sq);
-  // shadow + underglow always
-  ctx.fillStyle = 'rgba(0,0,0,.5)';
-  ctx.beginPath(); ctx.ellipse(0, 6, w * 0.72, h * 0.52, 0, 0, 7); ctx.fill();
-  ctx.fillStyle = 'rgba(124,255,107,.14)';
-  ctx.beginPath(); ctx.ellipse(0, 4, w * 0.85, h * 0.58, 0, 0, 7); ctx.fill();
-
-  const spr = carSprites[META.car];
-  if (spr && spr.complete && spr.naturalWidth) {
-    const sw = w * 1.3, sh = h * 1.18;
-    ctx.drawImage(spr, -sw / 2, -sh / 2, sw, sh);
-  } else {
-    // SKETCH tier: hand-drawn vector S15
-    const ww = 15, wh = 26;
-    drawWheel(-w / 2 - 2, -h * 0.30, ww, wh, 0.10);
-    drawWheel(w / 2 + 2, -h * 0.30, ww, wh, -0.10);
-    drawWheel(-w / 2 - 2, h * 0.30, ww, wh, 0.12);
-    drawWheel(w / 2 + 2, h * 0.30, ww, wh, -0.12);
-    const bg = ctx.createLinearGradient(-w / 2, 0, w / 2, 0);
-    bg.addColorStop(0, '#0b0b0e'); bg.addColorStop(0.5, '#232329'); bg.addColorStop(1, '#0b0b0e');
-    ctx.fillStyle = bg;
-    rr(-w / 2, -h / 2, w, h, 16); ctx.fill();
-    ctx.strokeStyle = 'rgba(201,201,212,.35)'; ctx.lineWidth = 1.5;
-    rr(-w / 2, -h / 2, w, h, 16); ctx.stroke();
-    ctx.strokeStyle = 'rgba(255,255,255,.08)'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(-w * 0.22, -h / 2 + 8); ctx.lineTo(-w * 0.22, -h * 0.12); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(w * 0.22, -h / 2 + 8); ctx.lineTo(w * 0.22, -h * 0.12); ctx.stroke();
-    ctx.fillStyle = '#0e1620';
-    rr(-w * 0.36, -h * 0.10, w * 0.72, h * 0.16, 6); ctx.fill();
-    ctx.fillStyle = '#101014';
-    rr(-w * 0.38, h * 0.08, w * 0.76, h * 0.14, 6); ctx.fill();
-    ctx.strokeStyle = '#e8e8f0'; ctx.lineWidth = 3;
-    const cx = 0, cy = h * 0.15, s = 7;
-    ctx.beginPath(); ctx.moveTo(cx, cy - s); ctx.lineTo(cx, cy + s); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(cx - s * 0.7, cy); ctx.lineTo(cx + s * 0.7, cy); ctx.stroke();
-    ctx.fillStyle = '#0e1620';
-    rr(-w * 0.34, h * 0.24, w * 0.68, h * 0.10, 5); ctx.fill();
-    ctx.fillStyle = '#fff8d6';
-    rr(-w * 0.38, -h / 2 - 2, w * 0.20, 7, 3); ctx.fill();
-    rr(w * 0.18, -h / 2 - 2, w * 0.20, 7, 3); ctx.fill();
-    ctx.fillStyle = '#ff2d2d';
-    rr(-w * 0.40, h / 2 - 5, w * 0.80, 6, 3); ctx.fill();
-    ctx.fillStyle = 'rgba(255,45,45,.35)';
-    rr(-w * 0.46, h / 2 - 8, w * 0.92, 12, 6); ctx.fill();
-  }
-  // headlight beam (all tiers)
-  const beam = ctx.createLinearGradient(0, -h / 2, 0, -h / 2 - 190);
-  beam.addColorStop(0, 'rgba(255,248,214,.20)'); beam.addColorStop(1, 'rgba(255,248,214,0)');
-  ctx.fillStyle = beam;
-  ctx.beginPath();
-  ctx.moveTo(-w * 0.42, -h / 2); ctx.lineTo(w * 0.42, -h / 2);
-  ctx.lineTo(w * 0.75, -h / 2 - 190); ctx.lineTo(-w * 0.75, -h / 2 - 190);
-  ctx.closePath(); ctx.fill();
-  ctx.restore();
-}
-
-function drawHellcat(n) {
-  const w = n.w, h = n.h;
-  const fade = Math.max(0, Math.min(1, (n.y + 520) / 220));
-  ctx.save();
-  ctx.globalAlpha = fade;
-  ctx.translate(n.x, n.y);
-  ctx.fillStyle = 'rgba(0,0,0,.5)';
-  ctx.beginPath(); ctx.ellipse(0, 6, w * 0.7, h * 0.52, 0, 0, 7); ctx.fill();
-  ctx.fillStyle = '#0c0c0e';
-  for (const [wx, wy] of [[-w / 2 - 1, -h * 0.3], [w / 2 + 1, -h * 0.3], [-w / 2 - 1, h * 0.3], [w / 2 + 1, h * 0.3]]) {
-    rr(wx - 7, wy - 13, 14, 26, 4); ctx.fill();
-    ctx.strokeStyle = '#8a8a94'; ctx.lineWidth = 2;
-    rr(wx - 7, wy - 13, 14, 26, 4); ctx.stroke();
-  }
-  const bg = ctx.createLinearGradient(-w / 2, 0, w / 2, 0);
-  bg.addColorStop(0, shade(n.color, -24)); bg.addColorStop(0.5, n.color); bg.addColorStop(1, shade(n.color, -24));
-  ctx.fillStyle = bg;
-  rr(-w / 2, -h / 2, w, h, 8); ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.lineWidth = 1.5;
-  rr(-w / 2, -h / 2, w, h, 8); ctx.stroke();
-  ctx.fillStyle = 'rgba(0,0,0,.35)';
-  rr(-w * 0.18, -h * 0.42, w * 0.36, h * 0.16, 4); ctx.fill();
-  ctx.fillStyle = '#0d141c';
-  rr(-w * 0.36, -h * 0.12, w * 0.72, h * 0.20, 6); ctx.fill();
-  ctx.fillStyle = 'rgba(255,246,207,.45)';
-  for (const hx of [-w * 0.28, -w * 0.10, w * 0.10, w * 0.28]) {
-    ctx.beginPath(); ctx.arc(hx, -h / 2 + 4, 3.5, 0, 7); ctx.fill();
-  }
-  ctx.fillStyle = '#ff2d2d';
-  rr(-w * 0.42, h / 2 - 8, w * 0.84, 6, 3); ctx.fill();
-  ctx.fillStyle = 'rgba(255,45,45,.30)';
-  rr(-w * 0.48, h / 2 - 12, w * 0.96, 14, 7); ctx.fill();
-  ctx.restore();
-}
-function drawSedan(n) {
-  const fade = Math.max(0, Math.min(1, (n.y + 520) / 220));
-  ctx.save(); ctx.globalAlpha = fade; ctx.translate(n.x, n.y);
-  ctx.fillStyle = 'rgba(0,0,0,.5)';
-  ctx.beginPath(); ctx.ellipse(0, 6, n.w * 0.7, n.h * 0.52, 0, 0, 7); ctx.fill();
-  ctx.fillStyle = '#181820';
-  rr(-n.w / 2, -n.h / 2, n.w, n.h, 18); ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.lineWidth = 1.5;
-  rr(-n.w / 2, -n.h / 2, n.w, n.h, 18); ctx.stroke();
-  ctx.fillStyle = '#0d141c';
-  rr(-n.w * 0.34, -n.h * 0.10, n.w * 0.68, n.h * 0.18, 8); ctx.fill();
-  ctx.fillStyle = 'rgba(255,246,207,.45)';
-  rr(-n.w * 0.36, -n.h / 2 + 2, n.w * 0.20, 5, 3); ctx.fill();
-  rr(n.w * 0.16, -n.h / 2 + 2, n.w * 0.20, 5, 3); ctx.fill();
-  ctx.fillStyle = '#ff2d2d';
-  rr(-n.w * 0.38, n.h / 2 - 7, n.w * 0.76, 6, 2); ctx.fill();
-  ctx.fillStyle = 'rgba(255,45,45,.30)';
-  rr(-n.w * 0.44, n.h / 2 - 11, n.w * 0.88, 13, 6); ctx.fill();
-  ctx.restore();
-}
-function drawTruck(n) {
-  const fade = Math.max(0, Math.min(1, (n.y + 520) / 220));
-  ctx.save(); ctx.globalAlpha = fade; ctx.translate(n.x, n.y);
-  ctx.fillStyle = 'rgba(0,0,0,.5)';
-  ctx.beginPath(); ctx.ellipse(0, 6, n.w * 0.72, n.h * 0.52, 0, 0, 7); ctx.fill();
-  ctx.fillStyle = '#20242c';
-  rr(-n.w / 2, -n.h / 2, n.w, n.h, 6); ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,.12)'; ctx.lineWidth = 1.5;
-  rr(-n.w / 2, -n.h / 2, n.w, n.h, 6); ctx.stroke();
-  ctx.fillStyle = '#14161c';
-  rr(-n.w * 0.40, n.h * 0.28, n.w * 0.80, n.h * 0.16, 4); ctx.fill();
-  ctx.fillStyle = '#0d141c';
-  rr(-n.w * 0.34, n.h * 0.30, n.w * 0.68, n.h * 0.08, 4); ctx.fill();
-  ctx.fillStyle = 'rgba(255,246,207,.45)';
-  rr(-n.w * 0.36, -n.h / 2 + 2, n.w * 0.18, 5, 3); ctx.fill();
-  rr(n.w * 0.18, -n.h / 2 + 2, n.w * 0.18, 5, 3); ctx.fill();
-  ctx.fillStyle = '#ff2d2d';
-  rr(-n.w * 0.40, n.h / 2 - 8, n.w * 0.80, 6, 3); ctx.fill();
-  ctx.fillStyle = 'rgba(255,45,45,.30)';
-  rr(-n.w * 0.46, n.h / 2 - 12, n.w * 0.92, 13, 6); ctx.fill();
-  ctx.restore();
-}
-
-const ADS = [
-  { t: 'DYINGTOLIVE.JP', s: 'STATIC BUILDS ONLY' },
-  { t: '★ CHEAP PARTS ★', s: 'DYINGTOLIVE.JP/SHOP' },
-  { t: 'HOUSE DECALS', s: 'MADE TO ORDER ★ $15' },
-  { t: 'HIGHWAY RUN', s: 'HOW LONG CAN YOU LAST?' }
-];
-function drawBoard(b) {
-  const bx = b.side < 0 ? roadX - 66 : roadX + roadW + 66;
-  const ad = ADS[b.ad];
-  ctx.save();
-  ctx.fillStyle = '#1a1a20';
-  ctx.fillRect(bx - 4, b.y, 8, 90);
-  const bw = 190, bh = 74;
-  ctx.fillStyle = '#0c0c10';
-  ctx.fillRect(bx - bw / 2, b.y - bh, bw, bh);
-  ctx.strokeStyle = '#7CFF6B'; ctx.lineWidth = 2;
-  ctx.strokeRect(bx - bw / 2, b.y - bh, bw, bh);
-  ctx.fillStyle = 'rgba(124,255,107,.08)';
-  ctx.fillRect(bx - bw / 2, b.y - bh, bw, bh);
-  ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
-  ctx.font = '900 17px Arial';
-  ctx.fillText(ad.t, bx, b.y - bh + 32);
-  ctx.fillStyle = '#7CFF6B'; ctx.font = 'bold 11px Arial';
-  ctx.fillText(ad.s, bx, b.y - bh + 54);
-  ctx.restore();
-}
-
 function draw() {
   ctx.clearRect(0, 0, W, H);
-  const shx = S.shake > 0.4 ? (Math.random() - .5) * S.shake : 0;
-  const shy = S.shake > 0.4 ? (Math.random() - .5) * S.shake : 0;
-  ctx.save();
-  const speedT = S.mode === 'play' ? Math.max(0, Math.min(1, (S.speed - S.baseSpeed) / (S.maxSpeed - S.baseSpeed))) : 0;
-  const zoom = 1 - speedT * 0.045;
-  const latV = (S.player.tx - S.player.x) * 0.0012;
-  ctx.translate(W / 2, H * 0.72);
-  ctx.scale(zoom, zoom);
-  ctx.transform(1, 0, -latV, 1, 0, 0);
-  ctx.translate(-W / 2 + shx, -H * 0.72 + shy);
-
-  const sky = ctx.createLinearGradient(0, 0, 0, H);
-  sky.addColorStop(0, '#07070d'); sky.addColorStop(1, '#0b0b12');
-  ctx.fillStyle = sky; ctx.fillRect(-40, -40, W + 80, H + 80);
-  ctx.fillStyle = 'rgba(255,255,255,.45)';
-  for (let i = 0; i < 46; i++) {
-    const sx = (i * 197.3 + S.dist * 0.4) % (W + 40);
-    const sy = (i * 89.7) % (H * 0.5);
-    ctx.fillRect(W - sx, sy, 2, 2);
+  // box floor shading
+  ctx.fillStyle = '#0d0d12';
+  ctx.fillRect(0, 0, W, H);
+  // danger line
+  ctx.strokeStyle = 'rgba(255,80,80,.55)';
+  ctx.setLineDash([8, 8]);
+  ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(6, lineY()); ctx.lineTo(W - 6, lineY()); ctx.stroke();
+  ctx.setLineDash([]);
+  // held fruit + guide
+  if (current && running && !over) {
+    const r = rad(current.tier);
+    ctx.strokeStyle = 'rgba(255,255,255,.25)';
+    ctx.setLineDash([4, 6]); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(current.x, current.y + r); ctx.lineTo(current.x, H); ctx.stroke();
+    ctx.setLineDash([]);
+    drawFruitShape(ctx, current.x, current.y, current.tier, r);
   }
-  ctx.fillStyle = '#e8e8f0';
-  ctx.beginPath(); ctx.arc(W * 0.86, H * 0.1, 34, 0, 7); ctx.fill();
-  ctx.fillStyle = '#07070d';
-  ctx.beginPath(); ctx.arc(W * 0.86 + 12, H * 0.1 - 6, 30, 0, 7); ctx.fill();
-
-  ctx.fillStyle = '#08080b';
-  ctx.fillRect(-40, -40, roadX + 40, H + 80);
-  ctx.fillRect(roadX + roadW, -40, W - roadX - roadW + 40, H + 80);
-
-  for (const b of S.boards) drawBoard(b);
-  ctx.fillStyle = '#232329';
-  for (const pl of S.poles) {
-    const px = pl.side < 0 ? roadX - 26 : roadX + roadW + 26;
-    ctx.fillRect(px - 3, pl.y, 6, 44);
-    ctx.fillStyle = '#fff6cf';
-    ctx.beginPath(); ctx.arc(px, pl.y, 5, 0, 7); ctx.fill();
-    ctx.fillStyle = 'rgba(255,246,207,.10)';
-    ctx.beginPath(); ctx.arc(px, pl.y + 26, 44, 0, 7); ctx.fill();
-    ctx.fillStyle = '#232329';
+  for (const f of fruits) {
+    if (f.dead) continue;
+    drawFruitShape(ctx, f.x, f.y, f.tier, rad(f.tier));
   }
-
-  const asg = ctx.createLinearGradient(roadX, 0, roadX + roadW, 0);
-  asg.addColorStop(0, '#101014'); asg.addColorStop(0.5, '#17171d'); asg.addColorStop(1, '#101014');
-  ctx.fillStyle = asg;
-  ctx.fillRect(roadX, -40, roadW, H + 80);
-  ctx.fillStyle = '#c9c9d4';
-  ctx.fillRect(roadX + 6, -40, 4, H + 80);
-  ctx.fillRect(roadX + roadW - 10, -40, 4, H + 80);
-  ctx.fillStyle = 'rgba(230,230,240,.55)';
-  const dashH = 46, gap = 54, off = S.dist % (dashH + gap);
-  for (let li = 1; li < 3; li++) {
-    const lx = roadX + laneW * li;
-    for (let y = -dashH - gap + off; y < H + dashH; y += dashH + gap)
-      ctx.fillRect(lx - 3, y, 6, dashH);
+  // popups
+  ctx.textAlign = 'center';
+  for (const p of popups) {
+    ctx.globalAlpha = Math.max(0, p.life / 900);
+    ctx.font = 'bold ' + Math.round(16 * SCALE + 6) + 'px Arial';
+    ctx.fillStyle = '#ffd94d';
+    ctx.fillText(p.text, p.x, p.y);
+    ctx.globalAlpha = 1;
   }
-  ctx.fillStyle = '#2c2c34';
-  ctx.fillRect(roadX - 14, -40, 8, H + 80);
-  ctx.fillRect(roadX + roadW + 6, -40, 8, H + 80);
-
-  if (S.mode === 'play' && S.speed > 15) {
-    ctx.strokeStyle = 'rgba(255,255,255,' + Math.min(0.28, (S.speed - 15) * 0.035) + ')';
-    ctx.lineWidth = 2;
-    for (let i = 0; i < 10; i++) {
-      const sx = Math.random() * W, sy = Math.random() * H, len = 40 + Math.random() * 90;
-      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx, sy + len); ctx.stroke();
-    }
-  }
-
-  // INFERNO tier: screen-edge heat pulse at high speed
-  if (META.flame >= 3 && S.mode === 'play' && speedT > 0.55) {
-    const pulse = 0.10 + 0.08 * Math.sin(S.t * 0.25) * speedT;
-    const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.32, W / 2, H / 2, H * 0.75);
-    vg.addColorStop(0, 'rgba(255,90,0,0)');
-    vg.addColorStop(1, 'rgba(255,90,0,' + pulse.toFixed(3) + ')');
-    ctx.fillStyle = vg;
-    ctx.fillRect(-40, -40, W + 80, H + 80);
-  }
-
-  const sorted = S.npcs.slice().sort((a, b) => a.y - b.y);
-  for (const n of sorted) {
-    if (n.type === 'hellcat') drawHellcat(n);
-    else if (n.type === 'truck') drawTruck(n);
-    else drawSedan(n);
-  }
-
-  if (S.mode !== 'dead') drawS15(S.player.x, H * 0.86);
-
-  for (const pt of S.parts) {
-    ctx.globalAlpha = Math.min(1, pt.life / 22);
-    ctx.fillStyle = pt.color;
-    ctx.fillRect(pt.x - pt.s / 2, pt.y - pt.s / 2, pt.s, pt.s);
-  }
-  ctx.globalAlpha = 1;
-  ctx.restore();
-
-  if (S.mode === 'play' || S.mode === 'dead') {
-    ctx.fillStyle = '#fff'; ctx.font = '900 26px Arial'; ctx.textAlign = 'left';
-    ctx.fillText(Math.floor(S.score).toLocaleString(), 18, 40);
-    ctx.fillStyle = '#7CFF6B'; ctx.font = '900 15px Arial';
-    ctx.fillText('NEAR MISS x' + S.nearMiss, 18, 64);
-    // bet progress
-    const b = S.bet;
-    if (S.mode === 'play' && b.amount > 0) {
-      ctx.fillStyle = b.won ? '#7CFF6B' : '#ffd94d';
-      ctx.font = '900 15px Arial';
-      const el = Math.floor(b.elapsed), tgt = b.time;
-      const mm = (s) => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
-      ctx.fillText(b.won ? 'BET WON +' + Math.round(b.amount * b.mult) : 'BET ' + mm(Math.min(el, tgt)) + ' / ' + mm(tgt), 18, 88);
-      if (!b.won) {
-        ctx.fillStyle = '#222'; ctx.fillRect(18, 94, 130, 6);
-        ctx.fillStyle = '#ffd94d'; ctx.fillRect(18, 94, 130 * Math.min(1, b.elapsed / b.time), 6);
-      }
-    }
-    ctx.fillStyle = '#555'; ctx.font = 'bold 13px Arial'; ctx.textAlign = 'right';
-    ctx.fillText('BEST ' + S.best.toLocaleString(), W - 18, 36);
-    const sp = (S.speed - S.baseSpeed) / (S.maxSpeed - S.baseSpeed);
-    ctx.fillStyle = '#888'; ctx.font = 'bold 12px Arial';
-    ctx.fillText(Math.min(400, Math.round(S.speed / S.maxSpeed * 400)) + ' MPH', W - 18, 58);
-    ctx.fillStyle = '#ffd94d'; ctx.font = '900 14px Arial';
-    ctx.fillText('★ ' + META.points.toLocaleString(), W - 18, 80);
-    ctx.fillStyle = '#222'; ctx.fillRect(W - 158, 88, 140, 7);
-    const grd = ctx.createLinearGradient(W - 158, 0, W - 18, 0);
-    grd.addColorStop(0, '#7CFF6B'); grd.addColorStop(1, '#ff5b5b');
-    ctx.fillStyle = grd; ctx.fillRect(W - 158, 88, 140 * sp, 7);
+  // danger vignette when stack is over the line
+  if (overTimer > 0 && running && !over) {
+    ctx.fillStyle = 'rgba(255,40,40,' + Math.min(0.12, overTimer / 1200 * 0.12) + ')';
+    ctx.fillRect(0, 0, W, lineY());
   }
 }
-
-/* ---------- loop ---------- */
-let lastTs = 0;
-function frame(ts) {
-  requestAnimationFrame(frame);
-  const dt = Math.min(3, (ts - lastTs) / 16.67 || 1);
-  lastTs = ts;
-  if (S.mode === 'play') update(dt);
-  else {
-    S.dist += 3 * dt;
-    for (const pl of S.poles) { pl.y += 3 * dt; if (pl.y > H + 60) { pl.y -= H + 260; pl.side *= -1; } }
-  }
+function loop(t) {
+  requestAnimationFrame(loop);
+  if (!last) last = t;
+  const dt = Math.min(100, t - last);
+  last = t;
+  if (running && !over) step(dt);
   draw();
 }
-
-/* ---------- bet UI ---------- */
-let betTimeIdx = 1;
-function getBetAmount() {
-  const v = parseInt(document.getElementById('betAmt').value, 10);
-  if (isNaN(v) || v < 0) return 0;
-  return Math.min(v, META.points);
+function endGame() {
+  over = true; running = false;
+  if (score > best) { best = score; localStorage.setItem('dtl-fruit-best', String(best)); bestEl.textContent = best; }
+  document.getElementById('finalscore').textContent = score;
+  document.getElementById('finalbest').textContent = best;
+  overov.classList.remove('hidden');
 }
-function refreshBetUI() {
-  const input = document.getElementById('betAmt');
-  let amt = getBetAmount();
-  input.value = amt;
-  const bt = BET_TIMES[betTimeIdx];
-  document.getElementById('winPreview').textContent = amt > 0 ? 'WIN ' + Math.round(amt * bt.mult) + ' PTS' : 'NO BET — FREE RUN';
-  const tb = document.getElementById('timeBtns');
-  tb.innerHTML = '';
-  BET_TIMES.forEach((t, i) => {
-    const b = document.createElement('button');
-    b.className = 'tbtn' + (i === betTimeIdx ? ' sel' : '');
-    b.innerHTML = t.s + 's<small>×' + t.mult + '</small>';
-    b.onclick = () => { betTimeIdx = i; refreshBetUI(); };
-    tb.appendChild(b);
-  });
+function aim(clientX) {
+  if (!current) return;
+  const rect = canvas.getBoundingClientRect();
+  dropX = clamp(clientX - rect.left, rad(current.tier), W - rad(current.tier));
+  current.x = dropX;
 }
-document.getElementById('betDown').onclick = () => {
-  const el = document.getElementById('betAmt');
-  el.value = Math.max(0, getBetAmount() - 10); refreshBetUI();
-};
-document.getElementById('betUp').onclick = () => {
-  const el = document.getElementById('betAmt');
-  el.value = Math.min(META.points, getBetAmount() + 10); refreshBetUI();
-};
-document.getElementById('betMax').onclick = () => {
-  document.getElementById('betAmt').value = META.points; refreshBetUI();
-};
-document.getElementById('betAmt').addEventListener('change', refreshBetUI);
-function refreshBalance() {
-  document.getElementById('menuBalance').textContent = '★ ' + META.points.toLocaleString() + ' PTS';
-  document.getElementById('garageBalance').textContent = '★ ' + META.points.toLocaleString() + ' PTS';
-}
-
-/* ---------- garage ---------- */
-function renderGarage() {
-  refreshBalance();
-  const fw = document.getElementById('flameTiers');
-  fw.innerHTML = '';
-  FLAME_TIERS.forEach((t, i) => {
-    const row = document.createElement('div');
-    row.className = 'tier';
-    let btn, cls = '';
-    if (i < META.flame) { btn = 'OWNED'; }
-    else if (i === META.flame) { btn = 'EQUIPPED'; cls = 'equipped'; }
-    else if (i === META.flame + 1) { btn = 'BUY ' + t.price; cls = 'buy'; }
-    else { btn = 'LOCKED'; }
-    row.innerHTML = '<div class="tinfo"><div class="tname">' + t.name + '</div><div class="tdesc">' + t.desc + '</div></div>';
-    const b = document.createElement('button');
-    b.className = 'tbtn2 ' + cls; b.textContent = btn;
-    b.disabled = !(i === META.flame + 1 && META.points >= t.price);
-    b.onclick = () => {
-      META.points -= t.price; META.flame = i; saveMeta();
-      pop(t.name + ' FLAMES EQUIPPED', '#ff9030');
-      renderGarage();
-    };
-    row.appendChild(b);
-    fw.appendChild(row);
-  });
-  const cw = document.getElementById('carTiers');
-  cw.innerHTML = '';
-  CAR_TIERS.forEach((t, i) => {
-    const row = document.createElement('div');
-    row.className = 'tier';
-    const imgHtml = t.img ? '<img src="' + t.img + '" alt="">' : '<img src="" alt="" style="opacity:0">';
-    let btn, cls = '';
-    if (i < META.car) { btn = 'OWNED'; }
-    else if (i === META.car) { btn = 'EQUIPPED'; cls = 'equipped'; }
-    else if (i === META.car + 1) { btn = 'BUY ' + t.price; cls = 'buy'; }
-    else { btn = 'LOCKED'; }
-    row.innerHTML = imgHtml + '<div class="tinfo"><div class="tname">' + t.name + '</div><div class="tdesc">' + t.desc + '</div></div>';
-    const b = document.createElement('button');
-    b.className = 'tbtn2 ' + cls; b.textContent = btn;
-    b.disabled = !(i === META.car + 1 && META.points >= t.price);
-    b.onclick = () => {
-      META.points -= t.price; META.car = i; saveMeta();
-      pop(t.name + ' BUILD EQUIPPED', '#7CFF6B');
-      renderGarage();
-    };
-    row.appendChild(b);
-    cw.appendChild(row);
-  });
-}
-
-/* ---------- ui ---------- */
-function startGame() {
-  const amt = getBetAmount();
-  const bt = BET_TIMES[betTimeIdx];
-  let placed = 0;
-  if (amt > 0 && amt <= META.points) { META.points -= amt; placed = amt; saveMeta(); }
-  document.getElementById('startScreen').classList.add('hidden');
-  document.getElementById('garageScreen').classList.add('hidden');
-  document.getElementById('overScreen').classList.add('hidden');
-  reset();
-  S.bet = { amount: placed, time: bt.s, mult: bt.mult, elapsed: 0, won: false };
-  S.mode = 'play';
-  refreshBalance();
-}
-document.getElementById('startBtn').onclick = startGame;
-document.getElementById('retryBtn').onclick = () => {
-  document.getElementById('overScreen').classList.add('hidden');
-  document.getElementById('startScreen').classList.remove('hidden');
-  refreshBetUI(); refreshBalance();
-};
-document.getElementById('garageBtn').onclick = () => {
-  document.getElementById('startScreen').classList.add('hidden');
-  document.getElementById('garageScreen').classList.remove('hidden');
-  renderGarage();
-};
-document.getElementById('overGarageBtn').onclick = () => {
-  document.getElementById('overScreen').classList.add('hidden');
-  document.getElementById('garageScreen').classList.remove('hidden');
-  renderGarage();
-};
-document.getElementById('garageBack').onclick = () => {
-  document.getElementById('garageScreen').classList.add('hidden');
-  if (S.mode === 'play') return;
-  document.getElementById('startScreen').classList.remove('hidden');
-  refreshBetUI(); refreshBalance();
-};
-document.addEventListener('visibilitychange', () => { if (document.hidden) for (const k in keys) keys[k] = false; });
-
+canvas.addEventListener('pointermove', e => { if (running && !over) aim(e.clientX); });
+canvas.addEventListener('pointerdown', e => {
+  if (!running || over) return;
+  aim(e.clientX);
+  drop();
+});
+document.getElementById('startbtn').addEventListener('click', newGame);
+document.getElementById('againbtn').addEventListener('click', newGame);
+document.getElementById('restartbtn').addEventListener('click', () => { if (running || over) newGame(); });
+window.addEventListener('resize', resize);
 resize();
-refreshBetUI();
-refreshBalance();
-requestAnimationFrame(frame);
+drawNext();
+requestAnimationFrame(loop);
 </script>
 </body>
 </html>
