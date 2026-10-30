@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>FRUIT MERGE ★ DYINGTOLIVE</title>
-<meta name="description" content="Drop fruits, merge matching pairs, grow the watermelon. A DYINGTOLIVE joint.">
+<title>WHEEL MERGE ★ DYINGTOLIVE</title>
+<meta name="description" content="Drop wheels, merge matching pairs, build the show chrome wheel. A DYINGTOLIVE joint.">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html,body { width:100%; height:100%; overflow:hidden; background:#040405;
@@ -50,7 +50,7 @@
 </head>
 <body>
 <div id="wrap">
-  <h1 class="title">FRUIT MERGE</h1>
+  <h1 class="title">WHEEL MERGE</h1>
   <div class="sub">★ DYINGTOLIVE ★</div>
   <div id="hud">
     <div class="panel"><div class="lbl">SCORE</div><div class="val gold" id="score">0</div></div>
@@ -60,8 +60,8 @@
   <div id="stage">
     <canvas id="game"></canvas>
     <div class="overlay" id="startov">
-      <div class="big">FRUIT<br>MERGE</div>
-      <div class="tagline">DROP FRUITS — MERGE MATCHING PAIRS<br>CHAIN THEM ALL THE WAY TO THE <b>WATERMELON</b><br><br>MOVE TO AIM — TAP / CLICK TO DROP<br>DON'T LET THE STACK CROSS THE LINE</div>
+      <div class="big">WHEEL<br>MERGE</div>
+      <div class="tagline">DROP WHEELS — MERGE MATCHING PAIRS<br>CHAIN THEM ALL THE WAY TO THE <b>SHOW CHROME WHEEL</b><br><br>MOVE TO AIM — TAP / CLICK TO DROP<br>DON'T LET THE STACK CROSS THE LINE</div>
       <button class="bigbtn" id="startbtn">PLAY</button>
     </div>
     <div class="overlay hidden" id="overov">
@@ -77,19 +77,19 @@
 </div>
 <script>
 "use strict";
-/* FRUIT MERGE — drop, merge, grow the watermelon. */
-const TIERS = [
-  { name:'Cherry',     r:16, color:'#e0243b', dark:'#8f1020', score:1  },
-  { name:'Strawberry', r:24, color:'#ff4d6d', dark:'#b81f3f', score:3  },
-  { name:'Grape',      r:34, color:'#9b5de5', dark:'#5f2ea6', score:6  },
-  { name:'Dekopon',    r:46, color:'#ff9f1c', dark:'#b35f00', score:10 },
-  { name:'Persimmon',  r:58, color:'#ff6b35', dark:'#b23a10', score:15 },
-  { name:'Apple',      r:72, color:'#ef233c', dark:'#9c0f22', score:21 },
-  { name:'Pear',       r:88, color:'#d9e021', dark:'#8a9310', score:28 },
-  { name:'Peach',      r:106,color:'#ffb3c1', dark:'#c97a8a', score:36 },
-  { name:'Pineapple',  r:126,color:'#ffd60a', dark:'#b89a00', score:45 },
-  { name:'Melon',      r:150,color:'#7bd88a', dark:'#3f9e4d', score:55 },
-  { name:'Watermelon', r:180,color:'#2a9d4a', dark:'#14632a', score:66 },
+/* WHEEL MERGE — drop, merge, build the show chrome wheel. */
+const WHEELS = [
+  { name:'Steelie',     r:16, light:'#5a5a64', dark:'#222228', spokes:0,  holes:true,  lip:false, bolts:false, score:1  },
+  { name:'Hubcap',      r:24, light:'#b9b9c2', dark:'#6f6f78', spokes:0,  holes:false, lip:false, bolts:false, score:3  },
+  { name:'Stock Alloy', r:34, light:'#a8a8b2', dark:'#5d5d66', spokes:5,  holes:false, lip:false, bolts:false, score:6  },
+  { name:'5-Spoke',     r:46, light:'#c2c2cc', dark:'#67676f', spokes:5,  holes:false, lip:false, bolts:false, score:10 },
+  { name:'Mesh',        r:58, light:'#cfcfd8', dark:'#70707a', spokes:14, holes:false, lip:false, bolts:false, score:15 },
+  { name:'Split 5',     r:72, light:'#d6d6de', dark:'#787882', spokes:10, holes:false, lip:false, bolts:false, score:21 },
+  { name:'Multi-Spoke', r:88, light:'#dddddd', dark:'#7d7d87', spokes:12, holes:false, lip:false, bolts:false, score:28 },
+  { name:'Deep Dish',   r:106,light:'#e2e2e8', dark:'#82828c', spokes:6,  holes:false, lip:true,  bolts:false, score:36 },
+  { name:'3-Piece',     r:126,light:'#ececf0', dark:'#8a8a94', spokes:8,  holes:false, lip:true,  bolts:true,  score:45 },
+  { name:'Billet',      r:150,light:'#f4f4f8', dark:'#90909a', spokes:10, holes:false, lip:true,  bolts:true,  score:55 },
+  { name:'Show Chrome', r:180,light:'#ffffff', dark:'#9a9aa4', spokes:12, holes:false, lip:true,  bolts:true,  score:66 },
 ];
 const MAX_SPAWN_TIER = 4; // only the 5 smallest drop from the top
 const canvas = document.getElementById('game');
@@ -101,13 +101,13 @@ const bestEl = document.getElementById('best');
 const startov = document.getElementById('startov');
 const overov = document.getElementById('overov');
 
-let W = 0, H = 0, DPR = 1, SCALE = 1; // logical box size + fruit scale
-let fruits = [];      // {x,y,vx,vy,tier,dead}
+let W = 0, H = 0, DPR = 1, SCALE = 1; // logical box size + wheel scale
+let fruits = [];      // {x,y,vx,vy,tier,dead} — wheels, kept the old name internally
 let popups = [];      // {x,y,text,life}
-let current = null;   // fruit held at the top, not yet dropped
+let current = null;   // wheel held at the top, not yet dropped
 let nextTier = 0;
 let score = 0;
-let best = +(localStorage.getItem('dtl-fruit-best') || 0);
+let best = +(localStorage.getItem('dtl-wheel-best') || 0);
 let running = false, over = false;
 let dropX = 0, dropCooldown = 0;
 let overTimer = 0;
@@ -115,6 +115,58 @@ let last = 0, acc = 0;
 const STEP = 1000 / 120;
 
 bestEl.textContent = best;
+
+/* --- aired-up tire bounce sound (synthesized, no files) --- */
+let AC = null, noiseBuf = null, lastBounce = 0;
+function ensureAudio() {
+  try {
+    if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === 'suspended') AC.resume();
+    if (!noiseBuf) {
+      noiseBuf = AC.createBuffer(1, AC.sampleRate * 0.1, AC.sampleRate);
+      const d = noiseBuf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+  } catch (e) { /* audio unavailable — game still plays silent */ }
+}
+function bounceSound(strength) { // strength 0..1, from impact speed
+  if (!AC || AC.state !== 'running') return;
+  const now = performance.now();
+  if (now - lastBounce < 70) return; // throttle so a pile-up doesn't machine-gun
+  lastBounce = now;
+  const t = AC.currentTime;
+  const s = Math.min(1, Math.max(0, strength));
+  const vol = 0.12 + 0.35 * s;
+  // body: sine "boing" — pitch drops as the tire squashes and rebounds
+  const osc = AC.createOscillator();
+  const gain = AC.createGain();
+  osc.type = 'sine';
+  const f0 = 130 + 90 * s;
+  osc.frequency.setValueAtTime(f0, t);
+  osc.frequency.exponentialRampToValueAtTime(50, t + 0.15);
+  gain.gain.setValueAtTime(vol, t);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.17);
+  osc.connect(gain).connect(AC.destination);
+  osc.start(t); osc.stop(t + 0.18);
+  // second harmonic wobble for the rubbery boing character
+  const osc2 = AC.createOscillator();
+  const gain2 = AC.createGain();
+  osc2.type = 'triangle';
+  osc2.frequency.setValueAtTime(f0 * 2, t);
+  osc2.frequency.exponentialRampToValueAtTime(110, t + 0.10);
+  gain2.gain.setValueAtTime(vol * 0.25, t);
+  gain2.gain.exponentialRampToValueAtTime(0.001, t + 0.11);
+  osc2.connect(gain2).connect(AC.destination);
+  osc2.start(t); osc2.stop(t + 0.12);
+  // rubber thud: short lowpassed noise burst
+  const src = AC.createBufferSource(); src.buffer = noiseBuf;
+  const filt = AC.createBiquadFilter(); filt.type = 'lowpass'; filt.frequency.value = 480;
+  const ng = AC.createGain();
+  ng.gain.setValueAtTime(vol * 0.7, t);
+  ng.gain.exponentialRampToValueAtTime(0.001, t + 0.08);
+  src.connect(filt).connect(ng).connect(AC.destination);
+  src.start(t); src.stop(t + 0.09);
+}
 
 function resize() {
   const stage = document.getElementById('stage');
@@ -127,17 +179,18 @@ function resize() {
   canvas.style.width = W + 'px';
   canvas.style.height = H + 'px';
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  // fruit radii are tuned for a ~420px wide box; scale to fit
+  // wheel radii are tuned for a ~420px wide box; scale to fit
   SCALE = Math.min(1, W / 420);
   if (current) current.x = clamp(dropX, rad(current.tier), W - rad(current.tier));
   drawNext();
 }
-function rad(tier) { return TIERS[tier].r * SCALE; }
+function rad(tier) { return WHEELS[tier].r * SCALE; }
 function lineY() { return H * 0.18; }
 function clamp(v, a, b) { return v < a ? a : (v > b ? b : v); }
 function randTier() { return Math.floor(Math.random() * (MAX_SPAWN_TIER + 1)); }
 
 function newGame() {
+  ensureAudio();
   fruits = []; popups = [];
   score = 0; scoreEl.textContent = '0';
   nextTier = randTier();
@@ -153,43 +206,88 @@ function spawnHeld() {
   nextTier = randTier();
   drawNext();
 }
-function drawFruitShape(c, x, y, tier, r) {
-  const t = TIERS[tier];
-  const g = c.createRadialGradient(x - r * 0.35, y - r * 0.4, r * 0.1, x, y, r);
-  g.addColorStop(0, t.color);
-  g.addColorStop(0.75, t.color);
-  g.addColorStop(1, t.dark);
-  c.fillStyle = g;
+function drawWheelShape(c, x, y, tier, r) {
+  const w = WHEELS[tier];
+  // tire
+  c.fillStyle = '#131316';
   c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.fill();
-  // rim
-  c.strokeStyle = 'rgba(0,0,0,.35)'; c.lineWidth = Math.max(1, r * 0.04);
-  c.beginPath(); c.arc(x, y, r - c.lineWidth / 2, 0, Math.PI * 2); c.stroke();
-  // gloss
-  c.fillStyle = 'rgba(255,255,255,.35)';
-  c.beginPath(); c.ellipse(x - r * 0.38, y - r * 0.42, r * 0.22, r * 0.13, -0.6, 0, Math.PI * 2); c.fill();
-  // stem + leaf for mid tiers and up
-  if (tier >= 2) {
-    c.strokeStyle = '#5a3a1a'; c.lineWidth = Math.max(1.5, r * 0.05); c.lineCap = 'round';
-    c.beginPath(); c.moveTo(x, y - r + 1); c.quadraticCurveTo(x + r * 0.05, y - r - r * 0.16, x + r * 0.12, y - r - r * 0.18); c.stroke();
-    c.fillStyle = '#3fae5a';
-    c.beginPath(); c.ellipse(x + r * 0.22, y - r - r * 0.10, r * 0.20, r * 0.09, -0.5, 0, Math.PI * 2); c.fill();
+  // tread ticks
+  c.strokeStyle = 'rgba(255,255,255,0.07)';
+  c.lineWidth = Math.max(1, r * 0.03);
+  for (let i = 0; i < 28; i++) {
+    const a = i / 28 * Math.PI * 2;
+    c.beginPath();
+    c.moveTo(x + Math.cos(a) * r * 0.92, y + Math.sin(a) * r * 0.92);
+    c.lineTo(x + Math.cos(a) * r * 0.99, y + Math.sin(a) * r * 0.99);
+    c.stroke();
   }
-  // watermelon stripes
-  if (tier === 10) {
-    c.strokeStyle = 'rgba(0,60,20,.5)'; c.lineWidth = Math.max(2, r * 0.05);
-    for (const off of [-0.55, -0.2, 0.2, 0.55]) {
+  // rim face
+  const rr = r * 0.76;
+  const g = c.createRadialGradient(x - rr * 0.35, y - rr * 0.4, rr * 0.1, x, y, rr);
+  g.addColorStop(0, w.light);
+  g.addColorStop(0.7, w.light);
+  g.addColorStop(1, w.dark);
+  c.fillStyle = g;
+  c.beginPath(); c.arc(x, y, rr, 0, Math.PI * 2); c.fill();
+  // polished lip on the nicer wheels
+  if (w.lip) {
+    c.strokeStyle = 'rgba(255,255,255,0.85)';
+    c.lineWidth = Math.max(1.5, rr * 0.05);
+    c.beginPath(); c.arc(x, y, rr * 0.96, 0, Math.PI * 2); c.stroke();
+  }
+  // rim edge
+  c.strokeStyle = 'rgba(0,0,0,0.4)';
+  c.lineWidth = Math.max(1, rr * 0.03);
+  c.beginPath(); c.arc(x, y, rr, 0, Math.PI * 2); c.stroke();
+  // spokes
+  if (w.spokes) {
+    c.strokeStyle = w.dark;
+    c.lineWidth = Math.max(1.5, rr * 0.11);
+    c.lineCap = 'round';
+    const hubR = rr * 0.24;
+    for (let i = 0; i < w.spokes; i++) {
+      const a = i / w.spokes * Math.PI * 2;
       c.beginPath();
-      c.moveTo(x + r * off, y - r * 0.85);
-      c.quadraticCurveTo(x + r * off * 0.7, y, x + r * off, y + r * 0.85);
+      c.moveTo(x + Math.cos(a) * hubR, y + Math.sin(a) * hubR);
+      c.lineTo(x + Math.cos(a) * rr * 0.92, y + Math.sin(a) * rr * 0.92);
       c.stroke();
     }
   }
+  // steelie ventilation holes
+  if (w.holes) {
+    c.fillStyle = '#0c0c0e';
+    for (let i = 0; i < 5; i++) {
+      const a = i / 5 * Math.PI * 2 - Math.PI / 2;
+      c.beginPath(); c.arc(x + Math.cos(a) * rr * 0.52, y + Math.sin(a) * rr * 0.52, rr * 0.14, 0, Math.PI * 2); c.fill();
+    }
+  }
+  // 3-piece hardware bolts around the rim
+  if (w.bolts) {
+    c.fillStyle = '#f2f2f6';
+    for (let i = 0; i < 10; i++) {
+      const a = i / 10 * Math.PI * 2;
+      c.beginPath(); c.arc(x + Math.cos(a) * rr * 0.86, y + Math.sin(a) * rr * 0.86, Math.max(1, rr * 0.035), 0, Math.PI * 2); c.fill();
+    }
+  }
+  // hub + lug nuts + center cap
+  c.fillStyle = w.dark;
+  c.beginPath(); c.arc(x, y, rr * 0.26, 0, Math.PI * 2); c.fill();
+  c.fillStyle = 'rgba(0,0,0,0.55)';
+  for (let i = 0; i < 5; i++) {
+    const a = i / 5 * Math.PI * 2;
+    c.beginPath(); c.arc(x + Math.cos(a) * rr * 0.17, y + Math.sin(a) * rr * 0.17, Math.max(1, rr * 0.03), 0, Math.PI * 2); c.fill();
+  }
+  c.fillStyle = w.light;
+  c.beginPath(); c.arc(x, y, rr * 0.10, 0, Math.PI * 2); c.fill();
+  // gloss
+  c.fillStyle = 'rgba(255,255,255,0.18)';
+  c.beginPath(); c.ellipse(x - rr * 0.35, y - rr * 0.42, rr * 0.22, rr * 0.12, -0.6, 0, Math.PI * 2); c.fill();
 }
 function drawNext() {
   const s = 44;
   nctx.clearRect(0, 0, s, s);
   const r = Math.min(rad(nextTier), 20);
-  drawFruitShape(nctx, s / 2, s / 2, nextTier, r);
+  drawWheelShape(nctx, s / 2, s / 2, nextTier, r);
 }
 function drop() {
   if (!running || over || !current || dropCooldown > 0) return;
@@ -211,16 +309,16 @@ function step(dt) {
   // popups
   for (const p of popups) { p.y -= dt * 0.03; p.life -= dt; }
   popups = popups.filter(p => p.life > 0);
-  // game-over check: a settled fruit resting above the line
+  // GAME OVER: any wheel whose top sits above the line, continuously, for 1 second.
+  // Position-based on purpose — stacked wheels jiggle forever, so a speed test never fired.
   if (running && !over) {
     let danger = false;
     for (const f of fruits) {
       if (f.dead) continue;
-      const speed = Math.hypot(f.vx, f.vy);
-      if (f.y - rad(f.tier) < lineY() && speed < 30 && f.y > 0) { danger = true; break; }
+      if (f.y - rad(f.tier) < lineY()) { danger = true; break; }
     }
     overTimer = danger ? overTimer + dt : 0;
-    if (overTimer > 1200) endGame();
+    if (overTimer > 1000) endGame();
   }
 }
 function physics(dt) {
@@ -232,9 +330,9 @@ function physics(dt) {
     f.x += f.vx * dt;
     f.y += f.vy * dt;
     const r = rad(f.tier);
-    if (f.x < r) { f.x = r; f.vx = Math.abs(f.vx) * 0.2; }
-    if (f.x > W - r) { f.x = W - r; f.vx = -Math.abs(f.vx) * 0.2; }
-    if (f.y > H - r) { f.y = H - r; f.vy = -Math.abs(f.vy) * 0.15; f.vx *= 0.8; }
+    if (f.x < r) { if (Math.abs(f.vx) > 200) bounceSound(Math.abs(f.vx) / 900); f.x = r; f.vx = Math.abs(f.vx) * 0.2; }
+    if (f.x > W - r) { if (Math.abs(f.vx) > 200) bounceSound(Math.abs(f.vx) / 900); f.x = W - r; f.vx = -Math.abs(f.vx) * 0.2; }
+    if (f.y > H - r) { if (Math.abs(f.vy) > 150) bounceSound(Math.abs(f.vy) / 900); f.y = H - r; f.vy = -Math.abs(f.vy) * 0.15; f.vx *= 0.8; }
   }
   // pairwise collisions + merges (repeat until stable, capped)
   for (let iter = 0; iter < 4; iter++) {
@@ -251,13 +349,13 @@ function physics(dt) {
         if (d >= min || d === 0) continue;
         if (a.tier === b.tier) {
           a.dead = true; b.dead = true;
-          if (a.tier < TIERS.length - 1) {
+          if (a.tier < WHEELS.length - 1) {
             const nt = a.tier + 1;
             fruits.push({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2,
               vx: (a.vx + b.vx) / 2, vy: Math.min(a.vy, b.vy) - 60,
               tier: nt, dead: false });
           }
-          const pts = TIERS[a.tier].score;
+          const pts = WHEELS[a.tier].score;
           score += pts;
           scoreEl.textContent = score;
           popups.push({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, text: '+' + pts, life: 900 });
@@ -271,6 +369,7 @@ function physics(dt) {
           b.x += nx * overlap * (ra / total) * 2; b.y += ny * overlap * (ra / total) * 2;
           const rvn = (b.vx - a.vx) * nx + (b.vy - a.vy) * ny;
           if (rvn < 0) {
+            if (-rvn > 180) bounceSound(-rvn / 900);
             const imp = -rvn * 0.6;
             a.vx -= nx * imp; a.vy -= ny * imp;
             b.vx += nx * imp; b.vy += ny * imp;
@@ -293,18 +392,18 @@ function draw() {
   ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.moveTo(6, lineY()); ctx.lineTo(W - 6, lineY()); ctx.stroke();
   ctx.setLineDash([]);
-  // held fruit + guide
+  // held wheel + guide
   if (current && running && !over) {
     const r = rad(current.tier);
     ctx.strokeStyle = 'rgba(255,255,255,.25)';
     ctx.setLineDash([4, 6]); ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(current.x, current.y + r); ctx.lineTo(current.x, H); ctx.stroke();
     ctx.setLineDash([]);
-    drawFruitShape(ctx, current.x, current.y, current.tier, r);
+    drawWheelShape(ctx, current.x, current.y, current.tier, r);
   }
   for (const f of fruits) {
     if (f.dead) continue;
-    drawFruitShape(ctx, f.x, f.y, f.tier, rad(f.tier));
+    drawWheelShape(ctx, f.x, f.y, f.tier, rad(f.tier));
   }
   // popups
   ctx.textAlign = 'center';
@@ -315,9 +414,9 @@ function draw() {
     ctx.fillText(p.text, p.x, p.y);
     ctx.globalAlpha = 1;
   }
-  // danger vignette when stack is over the line
+  // danger vignette when the stack is over the line
   if (overTimer > 0 && running && !over) {
-    ctx.fillStyle = 'rgba(255,40,40,' + Math.min(0.12, overTimer / 1200 * 0.12) + ')';
+    ctx.fillStyle = 'rgba(255,40,40,' + Math.min(0.12, overTimer / 1000 * 0.12) + ')';
     ctx.fillRect(0, 0, W, lineY());
   }
 }
@@ -331,7 +430,7 @@ function loop(t) {
 }
 function endGame() {
   over = true; running = false;
-  if (score > best) { best = score; localStorage.setItem('dtl-fruit-best', String(best)); bestEl.textContent = best; }
+  if (score > best) { best = score; localStorage.setItem('dtl-wheel-best', String(best)); bestEl.textContent = best; }
   document.getElementById('finalscore').textContent = score;
   document.getElementById('finalbest').textContent = best;
   overov.classList.remove('hidden');
@@ -345,6 +444,7 @@ function aim(clientX) {
 canvas.addEventListener('pointermove', e => { if (running && !over) aim(e.clientX); });
 canvas.addEventListener('pointerdown', e => {
   if (!running || over) return;
+  ensureAudio();
   aim(e.clientX);
   drop();
 });
