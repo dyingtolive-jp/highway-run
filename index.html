@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>WHEEL MERGE ★ DYINGTOLIVE</title>
-<meta name="description" content="Drop wheels, merge matching pairs, build the show chrome wheel. A DYINGTOLIVE joint.">
+<meta name="description" content="Drop wheels, merge matching pairs, build the show chrome wheel. Real JDM wheels — TE37, RPF1, Watanabe, Meister, BBS LM. A DYINGTOLIVE joint.">
 <style>
   * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html,body { width:100%; height:100%; overflow:hidden; background:#040405;
@@ -61,7 +61,7 @@
     <canvas id="game"></canvas>
     <div class="overlay" id="startov">
       <div class="big">WHEEL<br>MERGE</div>
-      <div class="tagline">DROP WHEELS — MERGE MATCHING PAIRS<br>CHAIN THEM ALL THE WAY TO THE <b>SHOW CHROME WHEEL</b><br><br>MOVE TO AIM — TAP / CLICK TO DROP<br>DON'T LET THE STACK CROSS THE LINE</div>
+      <div class="tagline">DROP WHEELS — MERGE MATCHING PAIRS<br>REAL JDM WHEELS — TE37 ★ RPF1 ★ MEISTER ★ BBS LM<br>CHAIN THEM ALL THE WAY TO THE <b>SHOW CHROME WHEEL</b><br><br>MOVE TO AIM — TAP / CLICK TO DROP<br>DON'T LET THE STACK CROSS THE LINE</div>
       <button class="bigbtn" id="startbtn">PLAY</button>
     </div>
     <div class="overlay hidden" id="overov">
@@ -78,19 +78,32 @@
 <script>
 "use strict";
 /* WHEEL MERGE — drop, merge, build the show chrome wheel. */
+/* Famous JDM wheels, smallest to show chrome. img = photo sprite (see img/wheels/);
+   light/dark/spokes/etc. only feed the vector fallback if a photo fails to load. */
 const WHEELS = [
-  { name:'Steelie',     r:16, light:'#5a5a64', dark:'#222228', spokes:0,  holes:true,  lip:false, bolts:false, score:1  },
-  { name:'Hubcap',      r:24, light:'#b9b9c2', dark:'#6f6f78', spokes:0,  holes:false, lip:false, bolts:false, score:3  },
-  { name:'Stock Alloy', r:34, light:'#a8a8b2', dark:'#5d5d66', spokes:5,  holes:false, lip:false, bolts:false, score:6  },
-  { name:'5-Spoke',     r:46, light:'#c2c2cc', dark:'#67676f', spokes:5,  holes:false, lip:false, bolts:false, score:10 },
-  { name:'Mesh',        r:58, light:'#cfcfd8', dark:'#70707a', spokes:14, holes:false, lip:false, bolts:false, score:15 },
-  { name:'Split 5',     r:72, light:'#d6d6de', dark:'#787882', spokes:10, holes:false, lip:false, bolts:false, score:21 },
-  { name:'Multi-Spoke', r:88, light:'#dddddd', dark:'#7d7d87', spokes:12, holes:false, lip:false, bolts:false, score:28 },
-  { name:'Deep Dish',   r:106,light:'#e2e2e8', dark:'#82828c', spokes:6,  holes:false, lip:true,  bolts:false, score:36 },
-  { name:'3-Piece',     r:126,light:'#ececf0', dark:'#8a8a94', spokes:8,  holes:false, lip:true,  bolts:true,  score:45 },
-  { name:'Billet',      r:150,light:'#f4f4f8', dark:'#90909a', spokes:10, holes:false, lip:true,  bolts:true,  score:55 },
-  { name:'Show Chrome', r:180,light:'#ffffff', dark:'#9a9aa4', spokes:12, holes:false, lip:true,  bolts:true,  score:66 },
+  { name:'Steelie',     r:16, light:'#5a5a64', dark:'#222228', spokes:0,  holes:true,  lip:false, bolts:false, score:1,  img:'img/wheels/w01-steelie.webp' },
+  { name:'Watanabe RS', r:24, light:'#b9b9c2', dark:'#6f6f78', spokes:8,  holes:false, lip:true,  bolts:false, score:3,  img:'img/wheels/w02-watanabe-rs.webp' },
+  { name:'RPF1',        r:34, light:'#a8a8b2', dark:'#5d5d66', spokes:10, holes:false, lip:false, bolts:false, score:6,  img:'img/wheels/w03-rpf1.webp' },
+  { name:'TE37',        r:46, light:'#c2c2cc', dark:'#67676f', spokes:6,  holes:false, lip:false, bolts:false, score:10, img:'img/wheels/w04-te37.webp' },
+  { name:'CR Kai',      r:58, light:'#cfcfd8', dark:'#70707a', spokes:5,  holes:false, lip:false, bolts:false, score:15, img:'img/wheels/w05-cr-kai.webp' },
+  { name:'SSR SP1',     r:72, light:'#d6d6de', dark:'#787882', spokes:14, holes:false, lip:true,  bolts:false, score:21, img:'img/wheels/w06-ssr-sp1.webp' },
+  { name:'Advan RG',    r:88, light:'#dddddd', dark:'#7d7d87', spokes:5,  holes:false, lip:false, bolts:false, score:28, img:'img/wheels/w07-advan-rg.webp' },
+  { name:'57DR',        r:106,light:'#e2e2e8', dark:'#82828c', spokes:6,  holes:false, lip:true,  bolts:false, score:36, img:'img/wheels/w08-57dr.webp' },
+  { name:'Meister S1',  r:126,light:'#ececf0', dark:'#8a8a94', spokes:16, holes:false, lip:true,  bolts:true,  score:45, img:'img/wheels/w09-meister-s1.webp' },
+  { name:'BBS LM',      r:150,light:'#f4f4f8', dark:'#90909a', spokes:14, holes:false, lip:true,  bolts:true,  score:55, img:'img/wheels/w10-bbs-lm.webp' },
+  { name:'Show Chrome', r:180,light:'#ffffff', dark:'#9a9aa4', spokes:12, holes:false, lip:true,  bolts:true,  score:66, img:'img/wheels/w11-show-chrome.webp' },
 ];
+/* Preload the photo sprites. A wheel draws its photo once loaded, vector fallback until then. */
+const wheelImgs = WHEELS.map(w => {
+  const im = new Image();
+  im.src = w.img;
+  im.onload = () => { drawNext(); };
+  return im;
+});
+function wheelImgReady(tier) {
+  const im = wheelImgs[tier];
+  return !!(im && im.complete && im.naturalWidth > 0);
+}
 const MAX_SPAWN_TIER = 4; // only the 5 smallest drop from the top
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -168,6 +181,67 @@ function bounceSound(strength) { // strength 0..1, from impact speed
   src.start(t); src.stop(t + 0.09);
 }
 
+/* --- merge blips: a different car-tool noise per tier (synthesized, no files) ---
+   Low tiers: a ratchet click or two. Mid tiers add an impact-wrench burst.
+   Top tiers finish with an air-hose release. Pitch climbs with the tier. */
+let lastMerge = 0;
+function mergeSound(tier) {
+  if (!AC || AC.state !== 'running') return;
+  const now = performance.now();
+  if (now - lastMerge < 40) return; // chains land in one frame — let one blip train speak
+  lastMerge = now;
+  const t = AC.currentTime;
+  const base = 520 + tier * 95;            // pitch climbs with tier
+  const blips = 1 + Math.floor(tier / 3);  // 1..4 clicks
+  const gap = 0.055;
+  for (let i = 0; i < blips; i++) {
+    const t0 = t + i * gap;
+    // tool click: short square blip, fast decay
+    const osc = AC.createOscillator();
+    const g = AC.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(base * (1 + i * 0.12), t0);
+    g.gain.setValueAtTime(0.16, t0);
+    g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.045);
+    osc.connect(g).connect(AC.destination);
+    osc.start(t0); osc.stop(t0 + 0.05);
+    // ratchet tick: bandpassed noise on top of each click
+    const src = AC.createBufferSource(); src.buffer = noiseBuf;
+    const bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = base * 2.2; bp.Q.value = 2;
+    const ng = AC.createGain();
+    ng.gain.setValueAtTime(0.22, t0);
+    ng.gain.exponentialRampToValueAtTime(0.001, t0 + 0.03);
+    src.connect(bp).connect(ng).connect(AC.destination);
+    src.start(t0); src.stop(t0 + 0.035);
+  }
+  // mid+ tiers: impact-wrench burst — rapid low pulse train
+  if (tier >= 4) {
+    const pulses = 6 + tier; // 10..16 pulses
+    for (let i = 0; i < pulses; i++) {
+      const t0 = t + i * 0.018;
+      const o = AC.createOscillator();
+      const g = AC.createGain();
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(180 + tier * 12, t0);
+      g.gain.setValueAtTime(0.07, t0);
+      g.gain.exponentialRampToValueAtTime(0.001, t0 + 0.016);
+      o.connect(g).connect(AC.destination);
+      o.start(t0); o.stop(t0 + 0.017);
+    }
+  }
+  // top tiers: air-hose release after the blips
+  if (tier >= 9) {
+    const t0 = t + blips * gap + 0.02;
+    const src = AC.createBufferSource(); src.buffer = noiseBuf;
+    const hp = AC.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 2500;
+    const ng = AC.createGain();
+    ng.gain.setValueAtTime(0.14, t0);
+    ng.gain.exponentialRampToValueAtTime(0.001, t0 + 0.35);
+    src.connect(hp).connect(ng).connect(AC.destination);
+    src.start(t0); src.stop(t0 + 0.36);
+  }
+}
+
 function resize() {
   const stage = document.getElementById('stage');
   const rect = stage.getBoundingClientRect();
@@ -207,6 +281,19 @@ function spawnHeld() {
   drawNext();
 }
 function drawWheelShape(c, x, y, tier, r) {
+  // photo sprite: wheel fills ~90% of the square, so draw it slightly oversize
+  // so the tire edge meets the circle; vector drawing below is the fallback.
+  if (wheelImgReady(tier)) {
+    const s = r * 2 / 0.9;
+    c.save();
+    c.beginPath(); c.arc(x, y, r, 0, Math.PI * 2); c.clip();
+    c.drawImage(wheelImgs[tier], x - s / 2, y - s / 2, s, s);
+    c.restore();
+    c.strokeStyle = 'rgba(0,0,0,0.5)';
+    c.lineWidth = Math.max(1, r * 0.02);
+    c.beginPath(); c.arc(x, y, r - c.lineWidth / 2, 0, Math.PI * 2); c.stroke();
+    return;
+  }
   const w = WHEELS[tier];
   // tire
   c.fillStyle = '#131316';
@@ -358,7 +445,8 @@ function physics(dt) {
           const pts = WHEELS[a.tier].score;
           score += pts;
           scoreEl.textContent = score;
-          popups.push({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, text: '+' + pts, life: 900 });
+          mergeSound(Math.min(a.tier + 1, WHEELS.length - 1));
+          popups.push({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, text: '+' + pts + ' ' + WHEELS[Math.min(a.tier + 1, WHEELS.length - 1)].name.toUpperCase(), life: 900 });
           merged = true;
         } else {
           // positional correction + simple velocity exchange
